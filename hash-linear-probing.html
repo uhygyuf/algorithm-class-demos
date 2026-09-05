@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hash Table with Linear Probing · Interactive Demo</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --red:#d64541; --amber:#f0a83a;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .presets{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .preset{border:1.5px solid var(--blue);background:var(--blue-pale);color:var(--blue);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:13px;font-family:inherit}
+  .preset.on{background:var(--blue);color:#fff;font-weight:600}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.92fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:8px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+  svg#stage{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .codebox{font-family:Consolas,monospace;font-size:13px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow-x:auto}
+  .coderow{display:flex;padding:1px 10px 1px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .coderow.cur.red{background:#ffe1de;color:#8c1d18;font-weight:700}
+  .desc{font-size:14.5px;min-height:46px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue)}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes popIn{0%{transform:scale(1)}40%{transform:scale(1.16)}100%{transform:scale(1)}}
+  .pop{animation:popIn .45s ease}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(15,93,168,.35)}50%{box-shadow:0 0 0 6px rgba(15,93,168,0)}}
+  .pulse{animation:pulse 1.2s infinite}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures</div>
+    <h1>Hash Table in C++ — Interactive Demo</h1>
+    <div class="chapter" id="chapter">Linear Probing (open addressing)</div>
+  </header>
+
+  <div class="presets" id="presets">
+    <button class="preset on" data-preset="a">Demo A: collisions · wrap-around · search</button>
+    <button class="preset" data-preset="b">Demo B: few collisions + miss (stop at EMPTY)</button>
+  </div>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>🗄 Hash table table[10] &nbsp;<span style="color:var(--ink-2);font-weight:400;font-size:12px">EMPTY = -1 · indices 0–9</span></h3>
+        <svg id="stage" viewBox="0 0 900 320"></svg>
+        <div class="legend">
+          <span><span class="dot" style="background:#cfe4fa;border:1px solid #0f5da8"></span>starting slot h(key)</span>
+          <span><span class="dot" style="background:#fde8c8;border:1px solid #b45309"></span>collision, probing</span>
+          <span><span class="dot" style="background:#b9e6cd;border:1px solid #137a42"></span>inserted</span>
+          <span><span class="dot" style="background:#f8d0cf;border:1px solid #c0392b"></span>occupied / miss</span>
+          <span style="font-family:Consolas">h(key)=key%10 · on collision: index=(index+1)%10</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>💬 Current step</h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 Code: HashTable (linear probing)</h3>
+        <div class="codebox" id="codeBox"></div>
+      </div>
+      <div class="card">
+        <h3>📐 Formulas</h3>
+        <div style="font-size:16px;line-height:2">
+          <b>Hash function</b>:&nbsp; <code>h(key) = key % TABLE_SIZE</code>&nbsp; (TABLE_SIZE = 10, indices 0–9)<br>
+          <b>Linear probing</b>:&nbsp; <code style="color:#c0392b;font-weight:700">index = (index + 1) % TABLE_SIZE</code>
+          <span style="color:var(--ink-2);font-size:13px">← scan the next slot on collision (wrap from 9 back to 0)</span><br>
+          <b>Search stop rule</b>:&nbsp; an <code>EMPTY</code> slot means the key is absent; if we loop back to <code>start</code>, it is absent too
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset">⏮ Reset (R)</button>
+    <button class="btn2 ghost" id="bPrev">◀ Back (←)</button>
+    <button class="btn2 primary" id="bPlay">▶ Play (Space)</button>
+    <button class="btn2" id="bNext">Next ▶ (→)</button>
+    <button class="btn2 ghost" id="bEnd">⏭ Result (E)</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Hash Table with Linear Probing — Interactive Demo (English)
+ * TABLE_SIZE=10, EMPTY=-1, h(k)=k%10
+ * insert: on collision step index=(index+1)%10 (the red line)
+ * search: stop at EMPTY / stop after a full loop back to start
+ * ============================================================ */
+const TABLE_SIZE = 10, EMPTY = -1;
+
+const CODE = [
+  '#define TABLE_SIZE 10',
+  '#define EMPTY -1',
+  'class HashTable {',
+  '  int table[TABLE_SIZE];',
+  '  int hashFunction(int key) {',
+  '    return key % TABLE_SIZE;',
+  '  }',
+  'public:',
+  '  void insert(int key) {',
+  '    int index = hashFunction(key);',
+  '    while (table[index] != EMPTY) {',
+  '      index = (index + 1) % TABLE_SIZE;   // Linear Probing',
+  '    }',
+  '    table[index] = key;',
+  '  }',
+  '  bool search(int key) {',
+  '    int index = hashFunction(key);',
+  '    int start = index;',
+  '    while (table[index] != EMPTY) {',
+  '      if (table[index] == key) return true;',
+  '      index = (index + 1) % TABLE_SIZE;',
+  '      if (index == start) break;          // full loop',
+  '    }',
+  '    return false;',
+  '  }',
+  '};'
+];
+const RED_LINES = new Set([11]);
+
+const PRESETS = {
+  a: { insert: [15, 25, 35, 45, 55, 65, 75], search: [55, 95] },
+  b: { insert: [12, 24, 36, 48, 50], search: [42] }
+};
+
+function buildFrames(preset) {
+  const table = new Array(TABLE_SIZE).fill(EMPTY);
+  const frames = [];
+  function snap(msg, o) {
+    o = o || {};
+    frames.push({ msg, line: (o.line === undefined ? -1 : o.line),
+      red: !!o.red, hl: o.hl || [], table: table.slice() });
+  }
+  function step(label) { snap('▸ <b>' + label + '</b>', {}); }
+  function hashStep(key) {
+    const h = ((key % TABLE_SIZE) + TABLE_SIZE) % TABLE_SIZE;
+    snap('insert(<b>' + key + '</b>): index = hashFunction(' + key + ') = ' + key + ' % 10 = <b>' + h + '</b>',
+      { line: 9, hl: [['start', h]] });
+    return h;
+  }
+
+  step('Construct HashTable: every slot initialised to EMPTY(-1)');
+  snap('for loop sets table[0..9] to EMPTY(-1) — dashed grey cells are empty slots', { line: 7 });
+
+  for (const key of preset.insert) {
+    let idx = hashStep(key);
+    let probes = 0;
+    while (table[idx] !== EMPTY) {
+      probes++;
+      snap('table[' + idx + ']=' + table[idx] + ' ≠ EMPTY → <b>collision!</b> execute the red line: index = (' + idx + ' + 1) % 10',
+        { line: 11, red: true, hl: [['conflict', idx]] });
+      idx = (idx + 1) % TABLE_SIZE;
+    }
+    if (probes) snap('Probing reached an empty slot table[' + idx + '] → <b>table[' + idx + '] = ' + key + '</b> (' + probes + ' probe step' + (probes > 1 ? 's' : '') + ')',
+      { line: 13, hl: [['write', idx]] });
+    else snap('table[' + idx + '] was empty — no collision → <b>table[' + idx + '] = ' + key + '</b>',
+      { line: 13, hl: [['write', idx]] });
+    table[idx] = key;
+  }
+
+  step('Insertion done — now demo <b>search(key)</b>');
+  for (const key of preset.search) {
+    const h = ((key % TABLE_SIZE) + TABLE_SIZE) % TABLE_SIZE;
+    snap('search(<b>' + key + '</b>): index = ' + key + ' % 10 = <b>' + h + '</b>, start = ' + h,
+      { line: 16, hl: [['start', h]] });
+    let idx = h, found = false;
+    while (table[idx] !== EMPTY) {
+      if (table[idx] === key) { found = true; break; }
+      snap('table[' + idx + ']=' + table[idx] + ' ≠ ' + key + ' → probe the next slot',
+        { line: 19, hl: [['miss', idx]] });
+      idx = (idx + 1) % TABLE_SIZE;
+      if (idx === h) break;
+    }
+    if (found) snap('✔ <b>Found ' + key + '</b>: table[' + idx + '] == ' + key + ' → return <b>true</b>', { line: 19, hl: [['found', idx]] });
+    else if (table[idx] === EMPTY) snap('✖ table[' + idx + '] is EMPTY → ' + key + ' <b>does not exist</b>, return false (empty slot = stop)', { line: 23, hl: [['miss', idx]] });
+    else snap('✖ Looped a full circle back to ' + idx + ' → ' + key + ' <b>does not exist</b>, break and return false (avoids an infinite loop)', { line: 21, hl: [['miss', idx]] });
+  }
+  snap('✔ Demo finished! Final table: [' + table.join(', ') + ']', { done: true });
+  return frames;
+}
+
+let preset = 'a', frames = buildFrames(PRESETS.a), idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1650 - (+$('speed').value) * 80; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(() => { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }, speedMs()); }
+
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, a, t) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (t !== undefined) e.textContent = t; return e; }
+
+function renderStage(f) {
+  const svg = $('#stage'); svg.innerHTML = '';
+  const W = 900, slotW = 76, x0 = (W - slotW * 10) / 2, y = 90, h = 90;
+  const paint = {};
+  for (const hh of f.hl) paint[hh[1]] = hh[0];
+  for (let i = 0; i < 10; i++) {
+    const x = x0 + i * slotW;
+    const v = f.table[i];
+    const empty = v === EMPTY;
+    const p = paint[i];
+    const fill = p === 'start' ? '#cfe4fa' : p === 'conflict' ? '#fde8c8' : p === 'miss' ? '#f8d0cf' : (p === 'write' || p === 'found') ? '#b9e6cd' : '#f6f8fb';
+    const stroke = p === 'start' ? '#0f5da8' : p === 'conflict' ? '#b45309' : p === 'miss' ? '#c0392b' : (p === 'write' || p === 'found') ? '#137a42' : '#c9d6e4';
+    const r = el('rect', { x: x + 3, y: y, width: slotW - 6, height: h, rx: 10, fill: fill, stroke: stroke, 'stroke-width': p ? 2.6 : 1.3, 'stroke-dasharray': empty ? '5 4' : null });
+    if (p === 'write' || p === 'found') r.setAttribute('class', 'pop');
+    if (p === 'start') r.setAttribute('class', 'pulse');
+    svg.appendChild(r);
+    svg.appendChild(el('text', { x: x + slotW / 2, y: y + h + 17, 'text-anchor': 'middle', 'font-size': 12, fill: '#8fa1b4' }, 'index ' + i));
+    svg.appendChild(el('text', { x: x + slotW / 2, y: empty ? y + h / 2 + 5 : y + h / 2 + 8, 'text-anchor': 'middle', 'font-size': empty ? 12.5 : 19, 'font-weight': empty ? 400 : 700, fill: empty ? '#b9c6d4' : (p === 'miss' ? '#c0392b' : '#1c2733') }, empty ? 'EMPTY' : String(v)));
+  }
+  svg.appendChild(el('text', { x: W / 2, y: 30, 'text-anchor': 'middle', 'font-size': 12, fill: '#5b6b7c', 'font-family': 'Consolas,monospace' }, 'h(key) = key % 10 · on collision: index = (index + 1) % 10 (wrap from 9 to 0)'));
+}
+
+function renderCode(f) {
+  const box = $('#codeBox'); box.innerHTML = '';
+  CODE.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '') + (f.line === i && (f.red || RED_LINES.has(i)) ? ' red' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx); box.appendChild(row);
+  });
+}
+
+function render() {
+  const f = frames[idx];
+  renderStage(f); renderCode(f);
+  const d = $('#desc'); d.className = 'desc' + (f.done ? ' done' : ''); d.innerHTML = f.msg;
+  $('#stepText').textContent = 'Step ' + (idx + 1) + ' / ' + frames.length;
+  $('#seek').max = frames.length - 1; $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0; $('#bNext').disabled = idx >= frames.length - 1; $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+function setPreset(p) {
+  preset = p; frames = buildFrames(PRESETS[p]); idx = 0;
+  document.querySelectorAll('.preset').forEach(b => b.classList.toggle('on', b.dataset.preset === p));
+  $('#chapter').textContent = 'Linear Probing — ' + (p === 'a' ? 'Demo A: collisions · wrap-around · search' : 'Demo B: few collisions + miss');
+  stopAuto(false); render();
+}
+
+$('#presets').addEventListener('click', e => { const b = e.target.closest('.preset'); if (b) setPreset(b.dataset.preset); });
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(() => { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setPreset('a');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>

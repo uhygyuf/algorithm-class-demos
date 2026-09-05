@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STL unordered_map · Hash Table in C++ Demo</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.95fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:8px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+  .codebox{font-family:Consolas,monospace;font-size:13px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:600px}
+  .coderow{display:flex;padding:1px 10px 1px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .desc{font-size:14.5px;min-height:46px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue)}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .entry{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 12px;margin-bottom:6px;background:#f8fafc;font-family:Consolas,monospace;font-size:14.5px}
+  .entry .k{font-weight:700;color:var(--blue-d)}
+  .entry .v{font-weight:700;color:var(--green-d);background:var(--green-pale);border-radius:6px;padding:1px 9px}
+  .entry.hot{background:var(--blue-pale);border-color:var(--blue);box-shadow:0 0 0 2px rgba(15,93,168,.18)}
+  .entry.hit{background:var(--green-pale);border-color:var(--green)}
+  .entry.dead{opacity:.5;border-style:dashed}
+  .empty-hint{color:#a8b6c4;text-align:center;padding:10px;font-size:12.5px;border:1px dashed var(--line);border-radius:10px}
+  .term{font-family:Consolas,monospace;font-size:13px;background:#101820;color:#cfe3dc;border-radius:10px;padding:10px 14px;min-height:110px;white-space:pre-wrap;line-height:1.55}
+  .term .curline{background:rgba(28,156,87,.28);display:inline-block;width:100%}
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes popIn{0%{transform:scale(1)}40%{transform:scale(1.05)}100%{transform:scale(1)}}
+  .pop{animation:popIn .4s ease}
+  .stepno{font-size:12px;color:var(--ink-2);margin-left:auto;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures</div>
+    <h1>Hash Table in C++ — Interactive Demo</h1>
+    <div class="chapter">STL container: unordered_map&lt;string, int&gt;</div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>📦 Hash table contents hashTable (key → value)</h3>
+        <div id="entries"></div>
+      </div>
+      <div class="card">
+        <h3>🖥 Program output (cout terminal)</h3>
+        <div class="term" id="term"></div>
+      </div>
+    </div>
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 Code: main() with unordered_map</h3>
+        <div class="codebox" id="codeBox"></div>
+      </div>
+      <div class="card">
+        <h3>💬 Current step</h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset">⏮ Reset (R)</button>
+    <button class="btn2 ghost" id="bPrev">◀ Back (←)</button>
+    <button class="btn2 primary" id="bPlay">▶ Play (Space)</button>
+    <button class="btn2" id="bNext">Next ▶ (→)</button>
+    <button class="btn2 ghost" id="bEnd">⏭ Result (E)</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * STL unordered_map — Interactive Demo (English)
+ * Executes the lecture code line by line.
+ * Left: table contents (key → value) + a live cout terminal.
+ * Teaching points: operator[] insert · find()!=end() existence check
+ *                  range-for iteration · erase · size()
+ * ============================================================ */
+const CODE = [
+  '#include <iostream>',
+  '#include <unordered_map>',
+  'using namespace std;',
+  'int main() {',
+  '  // unordered_map<string,int>: a hash table with string keys and int values',
+  '  unordered_map<string, int> hashTable;',
+  '  hashTable["apple"] = 5;',
+  '  hashTable["banana"] = 3;',
+  '  hashTable["orange"] = 8;',
+  '  string key = "apple";',
+  '  if (hashTable.find(key) != hashTable.end()) {',
+  '    cout << key << " number: " << hashTable[key] << endl;',
+  '  } else {',
+  '    cout << key << " does not exist!" << endl;',
+  '  }',
+  '  cout << "\\nElements in the hash table:" << endl;',
+  '  for (auto &pair : hashTable) {',
+  '    cout << pair.first << ": " << pair.second << endl;',
+  '  }',
+  '  hashTable.erase("banana");',
+  '  cout << "\\nSize of the hash table after removing banana: "',
+  '       << hashTable.size() << endl;',
+  '  return 0;',
+  '}'
+];
+
+function buildFrames() {
+  const frames = [];
+  const table = [];
+  const term = [];
+  const active = {};
+  function snap(msg, o) {
+    o = o || {};
+    frames.push({ msg, line: (o.line === undefined ? -1 : o.line),
+      entries: table.map(e => Object.assign({}, e)),
+      term: term.slice(), active: Object.assign({}, active),
+      termCur: (o.termCur === undefined ? -1 : o.termCur),
+      done: !!o.done });
+  }
+  function findEntry(k) { for (let i = 0; i < table.length; i++) if (table[i].k === k) return i; return -1; }
+
+  snap('Declare <b>unordered_map&lt;string, int&gt; hashTable</b> — internally a hash table: average O(1) insert / lookup / erase.', { line: 5 });
+
+  function P(txt) { term.push(txt); }
+  function resetActive() { for (const k in active) active[k] = undefined; }
+
+  const ins3 = [['apple', 5, 6], ['banana', 3, 7], ['orange', 8, 8]];
+  for (const [k, v, ln] of ins3) {
+    table.push({ k, v }); active[k] = 'hot';
+    snap('hashTable["<b>' + k + '</b>"] = ' + v + ' — operator[] inserts the key-value pair', { line: ln });
+  }
+  resetActive();
+
+  active['apple'] = 'hot';
+  snap('string key = "<b>apple</b>"; — the key we want to look up', { line: 9 });
+  snap('<b>hashTable.find(key) != hashTable.end()</b>: find() returns an iterator. apple exists → iterator ≠ end() → condition is true (this is the lookup pattern the lecture marks)', { line: 10, hl: 'apple' });
+  P('apple number: 5');
+  snap('cout prints <b>"apple number: 5"</b> (hashTable[key] fetches the value 5)', { line: 11, hl: 'apple', termCur: term.length - 1 });
+  active['apple'] = 'hit';
+
+  P('');
+  P('Elements in the hash table:');
+  snap('Print the header line "Elements in the hash table:"', { line: 15, termCur: term.length - 1 });
+  snap('Range-based for: <b>for (auto &pair : hashTable)</b> — pair.first is the key, pair.second is the value', { line: 16 });
+  for (const e of table) {
+    active[e.k] = 'hit';
+    P(e.k + ': ' + e.v);
+    snap('Print <b>"' + e.k + ': ' + e.v + '"</b>', { line: 17, termCur: term.length - 1 });
+  }
+  resetActive();
+
+  const bi = findEntry('banana');
+  table.splice(bi, 1);
+  active['banana'] = 'dead';
+  snap('hashTable.<b>erase("banana")</b> — removes the pair whose key is banana', { line: 19 });
+  delete active['banana'];
+
+  P('');
+  P('Size of the hash table after removing banana: 2');
+  snap('Print size(): after erasing banana, <b>2</b> pairs remain (apple, orange)', { line: 20, termCur: term.length - 1 });
+  snap('return 0; — the program ends ✔', { line: 23, done: true });
+  return frames;
+}
+
+let frames = buildFrames(), idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1700 - (+$('speed').value) * 85; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(() => { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }, speedMs()); }
+
+function renderEntries(f) {
+  const box = $('#entries'); box.innerHTML = '';
+  if (!f.entries.length) { box.innerHTML = '<div class="empty-hint">(empty — no pairs yet)</div>'; return; }
+  f.entries.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'entry' + (f.active[e.k] === 'hot' ? ' hot' : f.active[e.k] === 'hit' ? ' hit' : f.active[e.k] === 'dead' ? ' dead' : '');
+    const k = document.createElement('span'); k.className = 'k'; k.textContent = e.k;
+    const arrow = document.createElement('span'); arrow.style.color = '#9aa9b9'; arrow.textContent = ' → ';
+    const v = document.createElement('span'); v.className = 'v'; v.textContent = e.v;
+    row.appendChild(k); row.appendChild(arrow); row.appendChild(v);
+    if (f.active[e.k] === 'hot' || f.active[e.k] === 'hit') row.classList.add('pop');
+    box.appendChild(row);
+  });
+}
+function renderTerm(f) {
+  const t = $('#term'); t.innerHTML = '';
+  if (!f.term.length) { t.textContent = '(nothing printed yet — every cout appears here live)'; return; }
+  f.term.forEach((line, i) => {
+    const d = document.createElement('div');
+    if (i === f.termCur) { d.className = 'curline'; }
+    d.textContent = line;
+    t.appendChild(d);
+  });
+}
+function renderCode(f) {
+  const box = $('#codeBox'); box.innerHTML = '';
+  CODE.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx); box.appendChild(row);
+    if (f.line === i) row.scrollIntoView({ block: 'nearest' });
+  });
+}
+function render() {
+  const f = frames[idx];
+  renderEntries(f); renderTerm(f); renderCode(f);
+  const d = $('#desc'); d.className = 'desc' + (f.done ? ' done' : ''); d.innerHTML = f.msg;
+  $('#stepText').textContent = 'Step ' + (idx + 1) + ' / ' + frames.length;
+  $('#seek').max = frames.length - 1; $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0; $('#bNext').disabled = idx >= frames.length - 1; $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(() => { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+render();
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>

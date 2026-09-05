@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Tree Traversals · Interactive Demo</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.75}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+  .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+  .toolbar .btn{border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .toolbar .btn.warn{background:#fde8c8;color:#92400e}
+  .toolbar .btn:disabled{opacity:.45;cursor:not-allowed}
+  .grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.95fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+  svg#tree{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .answerbox{margin-top:8px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:46px}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:12.5px;margin-right:6px;white-space:nowrap}
+  .seq-chip{min-width:40px;text-align:center;padding:7px 2px;border-radius:8px;font-size:18px;font-weight:700;background:#fff;border:1.5px solid var(--green);color:var(--green-d);position:relative}
+  .seq-chip.in{background:var(--green);color:#fff}
+  .seq-chip .no{position:absolute;top:-9px;right:-7px;font-size:9.5px;font-weight:700;background:#f59e0b;color:#fff;border-radius:50%;width:16px;height:16px;line-height:16px;text-align:center}
+  .seq-chip.q{color:#9aa9b9;border-color:#c9d6e4;font-weight:400;font-size:20px}
+  .codebox{font-family:Consolas,monospace;font-size:13.5px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow-x:auto}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+  .stackbox{display:flex;flex-direction:column;gap:5px;font-family:Consolas,monospace}
+  .stack-row{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-left:4px solid #c9d6e4;border-radius:8px;padding:4px 10px;font-size:12.5px;background:#f8fafc}
+  .stack-row.top{border-left-color:var(--blue);background:var(--blue-pale)}
+  .stack-row .fn{font-weight:700;color:var(--blue-d);white-space:nowrap}
+  .stack-row .cap{color:var(--ink-2);font-size:11.5px;flex:1}
+  .chips{display:inline-flex;gap:3px}
+  .chip-lrv{width:17px;height:17px;border-radius:4px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;background:#e3e9f0;color:#9aa9b9}
+  .chip-lrv.done{background:var(--green);color:#fff}
+  .chip-lrv.act{background:var(--blue);color:#fff;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(15,93,168,.4)}50%{box-shadow:0 0 0 5px rgba(15,93,168,0)}}
+  .stack-empty{color:#a8b6c4;font-size:12.5px;text-align:center;padding:12px 0;font-family:inherit}
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2:hover{filter:brightness(.97)}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes popIn{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+  .pop{transform-box:fill-box;transform-origin:center;animation:popIn .45s ease}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures</div>
+    <h1>Binary Tree in Data Structure — Traversals · Interactive Demo</h1>
+    <div class="chapter" id="chapter">b) Binary Tree Traversals</div>
+    <div class="modes" id="modes" style="margin-top:8px">
+      <button class="mode-pill active" data-mode="inorder">1. Inorder Traversal <small>Left → Root → Right</small></button>
+      <button class="mode-pill" data-mode="preorder">2. Preorder Traversal <small>Root → Left → Right</small></button>
+      <button class="mode-pill" data-mode="postorder">3. Postorder Traversal <small>Left → Right → Root</small></button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn" id="btnQuiz">🎓 Quiz mode: show ? ? ? ? ? ? ? first</button>
+    <button class="btn warn" id="btnReveal" style="display:none">✅ Reveal answers</button>
+    <span class="stepno" id="stepText"></span>
+  </div>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>🌳 Example Tree <span class="tag">complete binary tree 1–7 (same as the slides)</span></h3>
+        <svg id="tree" viewBox="0 0 760 400" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="legend">
+          <span><span class="dot" style="background:#cfe4fa;border:1px solid #0f5da8"></span>active call</span>
+          <span><span class="dot" style="background:#1c9c57"></span>visited</span>
+          <span><span class="dot" style="background:#f59e0b"></span>orange badge = visit order</span>
+          <span><span class="dot" style="border:1px dashed #9fb0c1;background:#fff"></span>∅ = NULL (returns at once)</span>
+        </div>
+        <div class="answerbox" id="answerBox">
+          <span class="alabel">Traversal output:</span>
+          <div id="seqChips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="stepTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 C++ Recursive Implementation <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow row = current line. Watch the call stack: each recursive call is its own frame with Left/Root/Right progress lights.</div>
+      </div>
+      <div class="card">
+        <h3>🥞 Recursion call-stack expansion <span class="tag">mirrors the slide's step-by-step trace</span></h3>
+        <div class="stackbox" id="stackBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result · <kbd>Q</kbd> quiz mode</div>
+</div>
+
+<script>
+/* ============================================================
+ * Binary Tree Traversals — Interactive Demo
+ * English edition · same logic & sample tree as the classroom version
+ * inorder / preorder / postorder recursion + call-stack expansion
+ * ============================================================ */
+
+const TREE = {
+  v: 1, l: { v: 2, l: { v: 4, l: null, r: null }, r: { v: 5, l: null, r: null } },
+  r: { v: 3, l: { v: 6, l: null, r: null }, r: { v: 7, l: null, r: null } }
+};
+const POS = { 1:[380,70],2:[205,175],3:[555,175],4:[115,280],5:[295,280],6:[465,280],7:[645,280] };
+
+const MODES = {
+  inorder: {
+    no: '1.', fn: 'inorder',
+    label: 'Inorder Traversal (Left → Root → Right)',
+    rule: 'Left → Root → Right',
+    seq: ['L', 'V', 'R'],
+    code: [
+      'void inorder(Node* root) {',
+      '    if (root == NULL) return;',
+      '    inorder(root->left);',
+      '    cout << root->data << " ";',
+      '    inorder(root->right);',
+      '}'
+    ],
+    line: { if: 1, L: 2, V: 3, R: 4 }
+  },
+  preorder: {
+    no: '2.', fn: 'preorder',
+    label: 'Preorder Traversal (Root → Left → Right)',
+    rule: 'Root → Left → Right',
+    seq: ['V', 'L', 'R'],
+    code: [
+      'void preorder(Node* root) {',
+      '    if (root == NULL) return;',
+      '    cout << root->data << " ";',
+      '    preorder(root->left);',
+      '    preorder(root->right);',
+      '}'
+    ],
+    line: { if: 1, V: 2, L: 3, R: 4 }
+  },
+  postorder: {
+    no: '3.', fn: 'postorder',
+    label: 'Postorder Traversal (Left → Right → Root)',
+    rule: 'Left → Right → Root',
+    seq: ['L', 'R', 'V'],
+    code: [
+      'void postorder(Node* root) {',
+      '    if (root == NULL) return;',
+      '    postorder(root->left);',
+      '    postorder(root->right);',
+      '    cout << root->data << " ";',
+      '}'
+    ],
+    line: { if: 1, L: 2, R: 3, V: 4 }
+  }
+};
+const V_PHRASE = {
+  inorder:   'Left subtree of {v} finished → now it is the root\u2019s turn: cout prints',
+  preorder:  'As soon as {fn}({v}) is entered, visit the root first: cout prints',
+  postorder: 'Both subtrees of {v} are done → visit the root last: cout prints'
+};
+
+function buildFrames(modeKey) {
+  const M = MODES[modeKey];
+  const frames = [];
+  const stack = [];
+  const result = [];
+  const visits = {};
+  const CH = { L: 'Left', V: 'Root', R: 'Right' };
+  let outCount = 0;
+
+  function snap(msg, o) {
+    o = o || {};
+    frames.push({
+      msg, done: !!o.done,
+      hl: o.hl || [], codeLine: (o.line === undefined ? -1 : o.line),
+      stack: stack.map(f => ({ v: f.v, actIdx: f.actIdx })),
+      result: result.slice(), visits: Object.assign({}, visits),
+      outCount
+    });
+  }
+
+  function* go(n, parentV, dir) {
+    const v = n.v;
+    stack.push({ v, actIdx: -1 });
+    snap('Call <b>' + M.fn + '(' + v + ')</b>' + (parentV ? ' (from ' + M.fn + '(' + parentV + ') — its ' + dir + ' child)' : ' (root, called by main)') +
+      ': first execute <b>if (root == NULL)</b> — node ' + v + ' is not NULL, so we continue.',
+      { hl: [['active', v]], line: M.line.if });
+
+    for (let i = 0; i < M.seq.length; i++) {
+      const a = M.seq[i];
+      stack[stack.length - 1].actIdx = i;
+      if (a === 'V') {
+        outCount++;
+        result.push(v);
+        visits[v] = outCount;
+        const txt = V_PHRASE[modeKey].replace('{v}', v).replace('{fn}', M.fn);
+        snap('<b>' + txt + ' → ' + v + '</b> (result #' + outCount + ')',
+          { hl: [['write', v]], line: M.line.V });
+      } else {
+        const isL = (a === 'L');
+        const child = isL ? n.l : n.r;
+        if (child) {
+          snap(M.fn + '(' + v + ') executes line ' + (M.line[isL ? 'L' : 'R'] + 1) + ': <b>recurse ' + M.fn + '(' + child.v + ')</b> → descend into the ' + CH[a] + ' subtree',
+            { hl: [['active', child.v]], line: M.line[isL ? 'L' : 'R'] });
+          yield* go(child, v, CH[a]);
+        } else {
+          snap(M.fn + '(' + v + ')\u2019s ' + CH[a] + ' child is <b>NULL</b> → calling ' + M.fn + '(NULL) hits line 1 <b>if (root == NULL) → return immediately</b>, nothing is printed',
+            { hl: [], line: M.line.if });
+        }
+      }
+    }
+    stack.pop();
+    if (parentV !== null) {
+      snap(M.fn + '(' + v + ') finished → <b>return</b>, frame pops, back to ' + M.fn + '(' + parentV + ')',
+        { hl: [['active', parentV]], line: -1 });
+    } else {
+      snap('✔ ' + M.fn + '(' + v + ') finished → traversal complete! Output: <b>' + result.join(' , ') + '</b>',
+        { done: true, line: -1, hl: result.map(x => ['found', x]) });
+    }
+  }
+
+  (function runner() {
+    const gen = go(TREE, null, '');
+    for (;;) { const r = gen.next(); if (r.done) break; }
+  })();
+  return frames;
+}
+
+const CACHE = { inorder: buildFrames('inorder'), preorder: buildFrames('preorder'), postorder: buildFrames('postorder') };
+
+let mode = 'inorder', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+let quiz = false;
+const $ = s => document.querySelector(s);
+
+function speedMs() { return 1650 - (+$('speed').value) * 80; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, a, t) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+
+function renderTree(f) {
+  const svg = $('#tree');
+  svg.innerHTML = '';
+  const foundV = new Set(Object.keys(f.visits).map(Number));
+  (function walk(n) {
+    if (!n) return;
+    const p = POS[n.v];
+    for (const side of ['l', 'r']) {
+      const c = n[side];
+      if (c) {
+        const q = POS[c.v];
+        svg.appendChild(el('line', { x1: p[0], y1: p[1], x2: q[0], y2: q[1], stroke: '#c3cfdc', 'stroke-width': 1.8 }));
+        walk(c);
+      } else {
+        const cx = p[0] + (side === 'l' ? -52 : 52), cy = p[1] + 92;
+        svg.appendChild(el('line', { x1: p[0], y1: p[1] + 20, x2: cx, y2: cy - 20, stroke: '#e2e8f0', 'stroke-width': 1.3, 'stroke-dasharray': '4 4' }));
+        svg.appendChild(el('circle', { cx, cy, r: 12, fill: '#f6f8fb', stroke: '#c9d6e4', 'stroke-dasharray': '3 3' }));
+        svg.appendChild(el('text', { x: cx, y: cy + 3.5, 'text-anchor': 'middle', 'font-size': 8, fill: '#9fb0c1' }, 'NULL'));
+      }
+    }
+  })(TREE);
+
+  const hot = {}; const writes = new Set();
+  for (const h of f.hl) {
+    if (h[0] === 'active') hot[h[1]] = true;
+    if (h[0] === 'write' || h[0] === 'found') writes.add(h[1]);
+  }
+  (function draw(n) {
+    if (!n) return;
+    const p = POS[n.v];
+    const seen = foundV.has(n.v);
+    const col = seen ? '#1c9c57' : hot[n.v] ? '#cfe4fa' : '#eef3f9';
+    const c = el('circle', { cx: p[0], cy: p[1], r: 26, fill: col });
+    c.setAttribute('stroke', seen ? '#137a42' : hot[n.v] ? '#0f5da8' : '#a9bdd4');
+    c.setAttribute('stroke-width', (seen || hot[n.v]) ? 2.8 : 1.8);
+    const g = el('g', {});
+    if (writes.has(n.v)) c.setAttribute('class', 'pop');
+    g.appendChild(c);
+    g.appendChild(el('text', { x: p[0], y: p[1] + 6.5, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700, fill: seen ? '#fff' : '#1c2733' }, String(n.v)));
+    if (foundV.has(n.v)) {
+      g.appendChild(el('circle', { cx: p[0] + 30, cy: p[1] - 30, r: 10, fill: '#f59e0b', stroke: '#fff', 'stroke-width': 1.6 }));
+      g.appendChild(el('text', { x: p[0] + 30, y: p[1] - 26, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: '#fff' }, String(f.visits[n.v])));
+    }
+    svg.appendChild(g);
+    draw(n.l); draw(n.r);
+  })(TREE);
+}
+
+function renderCode(f) {
+  const M = MODES[mode];
+  const box = $('#codeBox');
+  box.innerHTML = '';
+  $('#codeTag').textContent = M.no + ' ' + M.fn + '(Node* root)';
+  M.code.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.codeLine === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+}
+
+function renderStack(f) {
+  const M = MODES[mode];
+  const box = $('#stackBox');
+  box.innerHTML = '';
+  if (!f.stack.length) {
+    const d = document.createElement('div');
+    d.className = 'stack-empty';
+    d.textContent = f.done ? '✅ All frames returned — call stack is empty' : 'Call stack is empty';
+    box.appendChild(d);
+    return;
+  }
+  for (let i = f.stack.length - 1; i >= 0; i--) {
+    const fr = f.stack[i];
+    const row = document.createElement('div');
+    row.className = 'stack-row' + (i === f.stack.length - 1 ? ' top' : '');
+    const fn = document.createElement('span'); fn.className = 'fn';
+    fn.textContent = M.fn + '(' + fr.v + ')';
+    const chips = document.createElement('span'); chips.className = 'chips';
+    M.seq.forEach((a, ai) => {
+      const c = document.createElement('span');
+      c.className = 'chip-lrv' + (ai < fr.actIdx ? ' done' : ai === fr.actIdx ? ' act' : '');
+      c.textContent = a;   // L / V / R letter badges
+      chips.appendChild(c);
+    });
+    const cap = document.createElement('span'); cap.className = 'cap';
+    const AL = { L: 'traversing left subtree', V: 'printing root', R: 'traversing right subtree' };
+    cap.textContent = fr.actIdx < 0 ? 'entry: null check' : fr.actIdx < M.seq.length ? AL[M.seq[fr.actIdx]] : 'winding up, about to return';
+    row.appendChild(fn); row.appendChild(chips); row.appendChild(cap);
+    box.appendChild(row);
+  }
+}
+
+function renderAnswer(f) {
+  const box = $('#seqChips');
+  box.innerHTML = '';
+  for (let i = 1; i <= 7; i++) {
+    const chip = document.createElement('div');
+    if (f.result.length >= i) {
+      chip.className = 'seq-chip in';
+      chip.textContent = f.result[i - 1];
+      const no = document.createElement('span');
+      no.className = 'no'; no.textContent = i;
+      chip.appendChild(no);
+    } else if (quiz) {
+      chip.className = 'seq-chip q';
+      chip.textContent = '?';
+    } else {
+      chip.className = 'seq-chip';
+      chip.textContent = '\u00b7';
+    }
+    box.appendChild(chip);
+  }
+}
+
+function render() {
+  const f = frames[idx];
+  renderTree(f);
+  renderCode(f);
+  renderStack(f);
+  renderAnswer(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · ' + MODES[mode].label;
+  $('#stepTag').textContent = MODES[mode].no + ' ' + MODES[mode].rule;
+  $('#chapter').textContent = 'b) Binary Tree Traversals — ' + MODES[mode].no + ' ' + MODES[mode].fn +
+    ' (' + MODES[mode].label + ')';
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+function setMode(m) {
+  mode = m;
+  frames = CACHE[m];
+  idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false);
+  render();
+}
+function toggleQuiz() {
+  quiz = !quiz;
+  $('#btnQuiz').style.display = quiz ? 'none' : '';
+  $('#btnReveal').style.display = quiz ? '' : 'none';
+  render();
+}
+
+$('#modes').addEventListener('click', e => {
+  const b = e.target.closest('.mode-pill');
+  if (b) setMode(b.dataset.mode);
+});
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => {
+  $('#speedL').textContent = speedMs() + 'ms';
+  if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); }
+});
+$('#btnQuiz').addEventListener('click', toggleQuiz);
+$('#btnReveal').addEventListener('click', toggleQuiz);
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+  else if (e.code === 'KeyQ') toggleQuiz();
+});
+
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('inorder');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>
