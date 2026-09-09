@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Non-Repeating Character (Hash Table) — Problem 1</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.97fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  /* input string chips */
+  .wordbox{display:flex;gap:6px;flex-wrap:wrap;padding:6px 2px}
+  .wch{min-width:34px;text-align:center;padding:6px 0;border-radius:8px;font-size:19px;font-weight:700;background:#eef3f9;border:1.5px solid #a9bdd4;color:var(--ink);position:relative;font-family:Consolas,monospace}
+  .wch .ix{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:9px;color:#9aa9b9;font-weight:400}
+  .wch.on{background:var(--blue-pale);border-color:var(--blue);color:var(--blue-d)}
+  .wch.cur{background:var(--amber-pale);border-color:var(--amber);color:#92400e;animation:pulse 1s infinite}
+  .wch.found{background:var(--green);border-color:var(--green-d);color:#fff}
+  .wch.miss{background:#eef3f9;border-color:#c9d6e4;color:#9aa9b9}
+
+  svg#freqTbl{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  .answerbox{margin-top:8px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:44px;font-family:Consolas,monospace}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .out-chip{min-width:40px;text-align:center;padding:6px 4px;border-radius:8px;font-size:20px;font-weight:700;background:#fff;border:1.5px solid var(--green);color:var(--green-d)}
+  .out-chip.in{background:var(--green);color:#fff}
+  #caret{display:inline-block;width:8px;height:24px;background:var(--green-d);animation:blink 1s steps(1) infinite}
+  #caret.off{background:#b9d8c6;animation:none}
+  @keyframes blink{50%{opacity:0}}
+
+  .codebox{font-family:Consolas,monospace;font-size:13px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:56vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,168,58,.5)}50%{box-shadow:0 0 0 6px rgba(240,168,58,0)}}
+  .idea{font-size:13.5px;color:var(--ink);line-height:1.9}
+  .idea b{color:var(--blue-d)}
+  .idea code{background:var(--blue-pale);color:var(--blue-d);padding:0 5px;border-radius:4px;font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures · Assignment</div>
+    <h1>Problem 1: First Non-Repeating Character — Using a Hash Table</h1>
+    <div class="chapter" id="chapter">Count frequencies with a hash table → pass 1 counts, pass 2 finds the first character that occurs once</div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. Example (1) <small>input aabbcde → output c</small></button>
+      <button class="mode-pill" data-mode="b">2. Example (2) <small>input aabbcc → output None</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html" class="on">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>📥 Input string s <span class="tag" id="modeTag"></span></h3>
+        <div class="wordbox" id="wordRow"></div>
+        <div class="legend" id="wordLeg">
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>character being processed</span>
+          <span><span class="dot" style="background:#e2eefa;border:1px solid #0f5da8"></span>already counted in pass 1</span>
+          <span><span class="dot" style="background:#1c9c57"></span>hit: the first non-repeating character</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🔢 Hash table = counting array int count[26] <span class="tag">index = letter − 'a'</span></h3>
+        <svg id="freqTbl" viewBox="0 0 936 120" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="legend">
+          <span><span class="dot" style="background:#eef3f9;border:1px solid #a9bdd4"></span>letter not seen (count = 0)</span>
+          <span><span class="dot" style="background:#e2eefa;border:1px solid #0f5da8"></span>seen</span>
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>count +1 happening / being checked</span>
+          <span><span class="dot" style="background:#1c9c57"></span>count = 1 → candidate</span>
+        </div>
+        <div class="answerbox" id="answerBox">
+          <span id="ansChips" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></span><span id="caret" class="off"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 C++ program (two passes) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow = current line. <b>Pass 1</b> counts how often each letter occurs, then <b>pass 2</b> scans left to right for the first count == 1.</div>
+      </div>
+      <div class="card">
+        <h3>💡 The idea <span class="tag">the problem asks for a hash table</span></h3>
+        <div class="idea">
+          <b>Why two passes?</b> In one pass you cannot know whether a character repeats later → <b>count everything first</b>, then <b>search</b>.<br>
+          ● <b>Hash</b>: only 26 letters → use array <code>count[26]</code>; index <code>c − 'a'</code> is the "hash address" (O(1) read/write). More generally you may use <code>map&lt;char,int&gt;</code>.<br>
+          ● <b>Pass 1</b>: for each character <code>count[c − 'a']++</code>.<br>
+          ● <b>Pass 2</b>: scan again in the original order; output the first <code>count == 1</code> and stop. If none qualifies → print <b>None</b>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Problem 1: First Non-Repeating Character Using Hash Table
+ * input → count[26] tally → pass 2 finds the first char with count == 1
+ * examples: aabbcde → c ; aabbcc → None
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const MODES = {
+  a: { s: 'aabbcde', expect: 'c' },
+  b: { s: 'aabbcc',  expect: 'None' }
+};
+const codeLines = s => [
+  '#include <iostream>',
+  'using namespace std;',
+  'int main() {',
+  '    string s = "' + s + '";',
+  '    int count[26] = {0};',
+  '    for (char c : s) count[c - \'a\']++;',
+  '    for (char c : s)',
+  '        if (count[c - \'a\'] == 1) {',
+  '            cout << c << endl;',
+  '            return 0;',
+  '        }',
+  '    cout << "None" << endl;',
+  '}'
+];
+const LN = { inS: 3, decl: 4, pass1: 5, pass2: 6, check: 7, coutC: 8, none: 11 };
+
+function buildFrames(modeKey) {
+  const M = MODES[modeKey], s = M.s;
+  const frames = [];
+  let phase = 'p1';
+  const freq = {};              // char -> count
+  let out = null, none = false;
+  let p1pos = -1, p2pos = -1;   // the two cursors; -1 = not started yet
+  const p1done = [];            // whether each position has been counted
+
+  function snap(msg, line, cur, extra) {
+    frames.push(Object.assign({
+      msg, line, phase, cur: cur || null,
+      freq: Object.assign({}, freq), out: out, none: none,
+      p1pos: p1pos, p2pos: p2pos, p1done: p1done.slice(), done: false
+    }, extra || {}));
+  }
+
+  snap('The task: read a string, use a <b>hash table</b> to count how often each character appears, print the <b>first non-repeating character</b>, or None if there is none.', -1, null);
+  snap('L4: <b>read the input</b> — here s = "' + s + '" (' + s.length + ' characters)', LN.inS, null);
+  snap('L5: build the hash table <b>int count[26] = {0};</b> — a counter for all 26 letters, all zero', LN.decl, null);
+  snap('Pass 1 starts: <b>for (char c : s)</b> left to right — each character runs count[c−\'a\']++', LN.pass1, null);
+
+  // pass 1: tally the frequencies
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    p1pos = i;
+    snap('Pass 1, s[' + i + '] = <b>' + c + '</b>: run count[\'' + c + '\' − \'a\']++ → count goes from ' + (freq[c] || 0) + ' to <b>' + ((freq[c] || 0) + 1) + '</b>', LN.pass1, c);
+    freq[c] = (freq[c] || 0) + 1;
+    snap('Recorded: ' + c + ' has appeared <b>' + freq[c] + '</b> time(s) so far', -1, c);
+    p1done.push(i);
+  }
+  p1pos = -1;
+  const uniq = Object.keys(freq).join(', ');
+  snap('✔ Pass 1 done — frequency table: ' + Object.keys(freq).map(k => k + '×' + freq[k]).join(', ') + (freq[s[0]] > 1 ? '; note ' + s[0] + ' repeats ' + freq[s[0]] + ' times' : ''), -1, null);
+  phase = 'p2';
+  snap('Pass 2 starts: <b>for (char c : s)</b> scan <b>in the original order</b> again, looking for the first count == 1 (only pass 2 decides which character is "first")', LN.pass2, null);
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    p2pos = i;
+    const cnt = freq[c];
+    if (cnt === 1) {
+      out = c;
+      snap('s[' + i + '] = <b>' + c + '</b>: count[\'' + c + '\'] = <b>1</b> → hit! This is the first non-repeating character', LN.check, c);
+      snap('L9: <b>cout &lt;&lt; c</b> → print <b>' + c + '</b>, then L10 return 0 ends the program (no need to look further)', LN.coutC, c);
+      phase = 'end';
+      snap('✔ Output: <b>' + c + '</b> — matches the assignment answer', -1, c, { done: true });
+      return frames;
+    } else {
+      snap('s[' + i + '] = <b>' + c + '</b>: count[\'' + c + '\'] = ' + cnt + ' ≠ 1 (it appears ' + cnt + ' times) → <b>skip</b>, keep looking', LN.check, c);
+    }
+  }
+  p2pos = -1;
+  none = true;
+  phase = 'end';
+  snap('Pass 2 finished: no character has count == 1 → run <b>cout &lt;&lt; "None"</b>', LN.none, null);
+  snap('✔ Output: <b>None</b> — matches the assignment answer (every character repeats)', -1, null, { done: true });
+  return frames;
+}
+const CACHE = { a: buildFrames('a'), b: buildFrames('b') };
+/*%%LOGIC_END%%*/
+
+let mode = 'a', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+function renderWord(f) {
+  const M = MODES[mode], s = M.s;
+  const row = $('#wordRow'); row.innerHTML = '';
+  s.split('').forEach((c, i) => {
+    const chip = document.createElement('div');
+    let cls = 'wch';
+    if (f.out !== null && f.out === c && i === f.p2pos) cls += ' found';
+    else if (f.cur === c && (f.p2pos === i || f.p1pos === i)) cls += ' cur';
+    else if (i < (f.p2pos === -1 ? f.p1done.length : f.p2pos)) cls += ' on';
+    else if (f.p2pos !== -1 && i < f.p2pos) cls += ' on';
+    else if (f.none && f.p2pos === -1 && i === s.length) cls += ' on';
+    chip.className = cls;
+    chip.textContent = c;
+    const ix = document.createElement('span'); ix.className = 'ix'; ix.textContent = i;
+    chip.appendChild(ix);
+    row.appendChild(chip);
+  });
+}
+
+function renderFreq(f) {
+  const svg = $('#freqTbl'); svg.innerHTML = '';
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, tx) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (tx !== undefined) e.textContent = tx; return e; };
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const colW = 936 / 26;
+  letters.split('').forEach((c, ci) => {
+    const x0 = ci * colW + 1.5, w = colW - 3;
+    const cnt = f.freq[c] || 0;
+    const isCur = (f.cur === c);
+    const fill = cnt > 0 ? (cnt === 1 && f.phase === 'p2' ? '#d9f2e3' : '#e2eefa') : '#f2f5f8';
+    const stroke = isCur ? '#f0a83a' : cnt > 0 ? '#0f5da8' : '#c9d6e4';
+    const sw = isCur ? 2.4 : cnt > 0 ? 1.6 : 1;
+    svg.appendChild(el('rect', { x: x0, y: 8, width: w, height: 66, rx: 4, fill: fill, stroke: stroke, 'stroke-width': sw }));
+    svg.appendChild(el('text', { x: x0 + w / 2, y: 30, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700, fill: cnt > 0 ? '#0f5da8' : '#b9c4cf' }, cnt > 0 ? String(cnt) : '·'));
+    svg.appendChild(el('text', { x: x0 + w / 2, y: 94, 'text-anchor': 'middle', 'font-size': 14, fill: '#5b6b7c', 'font-family': 'Consolas,monospace' }, c));
+  });
+}
+
+function renderCode(f) {
+  const M = MODES[mode];
+  const code = codeLines(M.s);
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = 's = "' + M.s + '" · expected ' + M.expect;
+  code.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) {
+    const rows = box.querySelectorAll('.coderow');
+    const cur = rows[f.line];
+    if (cur) box.scrollTop = Math.max(0, cur.offsetTop - box.clientHeight / 2);
+  }
+}
+
+function renderAnswer(f) {
+  const wrap = $('#ansChips'); wrap.innerHTML = '';
+  const pre = document.createElement('span');
+  pre.className = 'alabel';
+  pre.textContent = f.out !== null ? 'cout output:' : f.none ? 'cout output:' : 'result (cout):';
+  wrap.appendChild(pre);
+  if (f.out !== null || f.none) {
+    const chip = document.createElement('span');
+    chip.className = 'out-chip in';
+    chip.textContent = f.out !== null ? f.out : 'None';
+    wrap.appendChild(chip);
+  } else {
+    const chip = document.createElement('span');
+    chip.className = 'out-chip';
+    chip.textContent = '?';
+    wrap.appendChild(chip);
+  }
+  $('#caret').className = (f.out !== null || f.none) ? 'off' : '';
+}
+
+function render() {
+  const f = frames[idx];
+  renderWord(f); renderFreq(f); renderCode(f); renderAnswer(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  const M = MODES[mode];
+  $('#phaseTag').textContent = f.phase === 'p1' ? 'Pass 1 · counting' : f.phase === 'p2' ? 'Pass 2 · looking for count==1' : 'Done ✔';
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · s = "' + M.s + '"';
+  $('#modeTag').textContent = 's = "' + M.s + '" (' + M.s.length + ' characters)';
+  $('#chapter').textContent = 'Problem 1 · First Non-Repeating Character — input "' + M.s + '" → ' + M.expect;
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false);
+  render();
+}
+$('#modes').addEventListener('click', e => {
+  const b = e.target.closest('.mode-pill');
+  if (b) setMode(b.dataset.mode);
+});
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => {
+  $('#speedL').textContent = speedMs() + 'ms';
+  if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); }
+});
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>

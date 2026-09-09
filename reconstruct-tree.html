@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reconstruct the Binary Tree (Problem 2)</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+
+  .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+  .toolbar .btn{border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.97fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  svg#tree{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  /* cout output area: the lecture green box, terminal look */
+  .answerbox{margin-top:8px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:46px;font-family:Consolas,monospace}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .seq-chip{min-width:40px;text-align:center;padding:7px 2px;border-radius:8px;font-size:18px;font-weight:700;background:#fff;border:1.5px solid var(--green);color:var(--green-d)}
+  .seq-chip.in{background:var(--green);color:#fff}
+  .seq-chip.empty{color:#c6d6c3;border-color:#cfe0cc;font-weight:400}
+  #caret{display:inline-block;width:8px;height:24px;background:var(--green-d);animation:blink 1s steps(1) infinite}
+  #caret.off{background:#b9d8c6;animation:none}
+  @keyframes blink{50%{opacity:0}}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.8px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:56vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .stackbox{display:flex;flex-direction:column;gap:5px;font-family:Consolas,monospace;max-height:24vh;overflow:auto}
+  .stack-row{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-left:4px solid #c9d6e4;border-radius:8px;padding:4px 10px;font-size:12.5px;background:#f8fafc}
+  .stack-row.top{border-left-color:var(--blue);background:var(--blue-pale)}
+  .stack-row .fn{font-weight:700;color:var(--blue-d);white-space:nowrap}
+  .stack-row .cap{color:var(--ink-2);font-size:11.5px;flex:1}
+  .chips{display:inline-flex;gap:3px}
+  .chip-lrv{width:17px;height:17px;border-radius:4px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;background:#e3e9f0;color:#9aa9b9}
+  .chip-lrv.done{background:var(--green);color:#fff}
+  .chip-lrv.act{background:var(--blue);color:#fff;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(15,93,168,.4)}50%{box-shadow:0 0 0 5px rgba(15,93,168,0)}}
+  .stack-empty{color:#a8b6c4;font-size:12.5px;text-align:center;padding:10px 0;font-family:inherit}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc .r{color:#c0392b}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2:hover{filter:brightness(.97)}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes popIn{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+  .pop{transform-box:fill-box;transform-origin:center;animation:popIn .5s ease}
+
+  #caret{display:none}
+  .lanes{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}
+  .lane{display:flex;align-items:center;gap:8px;font-size:12px}
+  .lbl{font-family:Consolas,monospace;color:var(--ink-2);font-weight:700;width:78px;flex:none}
+  .lchips{display:flex;gap:4px;flex-wrap:wrap}
+  .L{width:30px;height:27px;line-height:27px;text-align:center;border-radius:6px;background:#eef3f9;border:1.5px solid #a9bdd4;font-weight:700;font-family:Consolas,monospace;font-size:14px;color:var(--ink)}
+  .L.sel{background:#fff3d6;border-color:#f0a83a;color:#92400e}
+  .L.root{background:var(--blue);color:#fff;border-color:var(--blue-d)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== header ========== -->
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures · Assignment · Problem 2</div>
+    <h1>Problem 2: Reconstruct the Binary Tree</h1>
+    <div class="chapter" id="chapter">Pre-order: A B D E C F · In-order: D B E A F C → reconstruct the tree and find the post-order</div>
+        <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. Example <small>pre A B D E C F · in D B E A F C</small></button>
+    </div>    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html" class="on">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+    </div></header>
+
+  <div class="grid">
+    <!-- ========== left column ========== -->
+    <div class="lcol">
+      <div class="card">
+                <h3>🌳 The reconstructed binary tree <span class="tag" id="modeTag"></span></h3>
+        <div class="lanes">
+          <div class="lane"><span class="lbl">Pre-order</span><span class="lchips" id="preRow"></span></div>
+          <div class="lane"><span class="lbl">In-order</span><span class="lchips" id="inRow"></span></div>
+        </div>
+        <svg id="tree" viewBox="0 0 940 380" preserveAspectRatio="xMidYMid meet"></svg>
+                <div class="legend">
+          <span><span class="dot" style="background:#eef3f9;border:1px solid #a9bdd4"></span>node reconstructed</span>
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>the root picked from pre in this step / being processed</span>
+          <span><span class="dot" style="background:#1c9c57"></span>just created / already printed by post-order</span>
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;border:3px dashed #f0a83a;margin-right:4px;vertical-align:-2px"></span>ROOT</span>
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;border:2px dashed #1c9c57;background:#e3f6ec;margin-right:4px;vertical-align:-2px"></span>LEAF</span>
+          <span>top two rows: yellow = current recursive range, blue = the root picked in this step</span>
+        </div>
+        <div class="answerbox" id="answerBox"><span id="ansChips" style="display:flex;gap:6px;flex-wrap:wrap"></span><span id="caret" class="off"></span></div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <!-- ========== right column ========== -->
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 Lecture C++ code (whole program) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+                <div class="code-foot">Yellow = current line. ① build(): the first element of pre is the root; split in around it and recurse. ② post-order traversal as a check.</div>
+      </div>
+      <div class="card">
+                <h3>🥞 Recursion call stack <span class="tag">build(pre part / in part) · postorder</span></h3>
+        <div class="stackbox" id="stackBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== player controls ========== -->
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Problem 2: Reconstruct the Binary Tree (assignment)
+ * Pre-order:  A B D E C F     In-order:  D B E A F C
+ * idea: the first element of pre = subtree root; split in around it into left/right parts → recurse
+ * after building: label root/leaves → verify with post-order D E B F C A
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const PRE = ['A', 'B', 'D', 'E', 'C', 'F'];
+const IN  = ['D', 'B', 'E', 'A', 'F', 'C'];
+const LBL = { A: 'A', B: 'B', D: 'D', E: 'E', C: 'C', F: 'F' };
+const ROOT_ANS = 'A';
+const LEAF_ANS = ['D', 'E', 'F'];
+const POST_ANS = ['D', 'E', 'B', 'F', 'C', 'A'];
+
+// code panel: reconstruction pseudocode + post-order (row numbers drive the highlight)
+const CODE = [
+  '// reconstruct: restore the tree from the pre + in sequences',
+  'build(pre segment, in segment):',
+  '    if pre segment is empty then return NULL',
+  '    root = first element of the pre segment',
+  '    i = index of root inside the in segment',
+  '    // root splits the in segment in two → left/right sizes are fixed',
+  '    root.left  = build(pre[1..i],   in[0..i-1])',
+  '    root.right = build(pre[i+1..],  in[i+1..])',
+  '    return root',
+  '',
+  '// after building: verify with post-order = left → right → root',
+  'postorder(root):',
+  '    if root == NULL then return',
+  '    postorder(root.left)',
+  '    postorder(root.right)',
+  '    print root'
+];
+const LB = { empty: 2, root: 3, idx: 4, lrec: 6, rrec: 7, ret: 8 };
+const LP = { ifn: 12, L: 13, R: 14, out: 15 };
+
+function buildFrames() {
+  const frames = [];
+  let phase = 'build';
+  const stack = [], out = [], visits = {};
+  const tree = {};          // letter -> {l,r}
+  const pathLog = [];
+  let rootV = null, outCount = 0;
+
+  function snap(msg, line, hl, extra) {
+    frames.push(Object.assign({
+      msg, line, hl: hl || [], phase, done: false,
+      stack: stack.map(r => Object.assign({}, r)), out: out.slice(),
+      visits: Object.assign({}, visits), tree: JSON.parse(JSON.stringify(tree)),
+      selPre: selPre, selIn: selIn, rootPick: rootPick, pathLog: pathLog.slice()
+    }, extra || {}));
+  }
+  // the current recursive range (drives the highlight on the two top rows)
+  let selPre = null, selIn = null, rootPick = null;
+
+  function* build(pl, ph, il, ih, parent, side, depth) {
+    if (pl > ph) return;
+    const segPre = PRE.slice(pl, ph + 1).join(' ');
+    const segIn = IN.slice(il, ih + 1).join(' ');
+    selPre = [pl, ph]; selIn = [il, ih];
+    stack.push({ kind: 'b', fn: 'build( pre: ' + segPre + '  |  in: ' + segIn + ' )', cap: '…' });
+    const r = PRE[pl];
+    snap('Call <b>build(' + segPre + ' / ' + segIn + ')</b> — take the first element of the <b>pre segment</b>: <b>root ' + r + '</b>', LB.root, [['pick', r]]);
+    const idx = IN.indexOf(r, il);
+    rootPick = r;
+    snap('<b>' + r + '</b> sits at position ' + (idx - il + 1) + ' of the in segment (slot ' + (idx - il + 1) + ' of that segment) → the in segment splits in two', LB.idx, [['pick', r]]);
+    // create this node
+    tree[r] = { l: null, r: null };
+    if (parent) {
+      tree[parent][side] = r;
+      snap('New node <b>' + r + '</b> created and linked to its parent ' + parent + ' on the ' + (side === 'l' ? 'left' : 'right') + ' (the edge appears)', -1, [['new', r]]);
+    } else {
+      rootV = r;
+      snap('New node <b>' + r + '</b> created — it is the <b>root of the whole tree</b> (it has no parent)', -1, [['new', r]]);
+    }
+    const leftLen = idx - il;    // how many elements of the in segment sit left of root
+    // left subtree: the next leftLen elements of pre + the left part of in
+    if (leftLen > 0) {
+      snap('In the in segment, ' + leftLen + ' element(s) sit left of ' + r + ' (' + IN.slice(il, idx).join(' ') + ') → recurse to build the left subtree from pre [' + PRE.slice(pl + 1, pl + leftLen + 1).join(' ') + ']', LB.lrec, [['pick', r]]);
+      yield* build(pl + 1, pl + leftLen, il, idx - 1, r, 'l', depth + 1);
+      snap('Left subtree finished → back in build(' + r + '), now the right subtree', -1, []);
+    }
+    const rightLen = ih - idx;
+    if (rightLen > 0) {
+      snap('In the in segment, ' + rightLen + ' element(s) sit right of ' + r + ' (' + IN.slice(idx + 1, ih + 1).join(' ') + ') → recurse to build the right subtree from pre [' + PRE.slice(pl + leftLen + 1, ph + 1).join(' ') + ']', LB.rrec, [['pick', r]]);
+      yield* build(pl + leftLen + 1, ph, idx + 1, ih, r, 'r', depth + 1);
+    }
+    snap('Both subtrees of build(' + r + ') are done → <b>return root (' + r + ')</b>, pop the stack and resume the caller', LB.ret, [['cmp', r]]);
+    stack.pop();
+  }
+
+  function* post(cur, parentMsg) {
+    stack.push({ kind: 'p', fn: 'postorder(' + cur + ')', cap: 'left→right→root', act: -1 });
+    snap('Calling <b>postorder(' + cur + ')</b> → null check: not NULL, continue', LP.ifn, [['cmp', cur]]);
+    const L = tree[cur].l;
+    if (L === null) {
+      snap('postorder(' + cur + ') has no left subtree (NULL) → return at once', LP.ifn, []);
+    } else {
+      stack[stack.length - 1].act = 0;
+      snap('Recurse <b>postorder(root.left)</b> → descend into left subtree ' + L, LP.L, [['cmp', L]]);
+      yield* post(L, cur);
+    }
+    const R = tree[cur].r;
+    if (R === null) {
+      snap('postorder(' + cur + ') has no right subtree (NULL) → return at once', LP.ifn, []);
+    } else {
+      stack[stack.length - 1].act = 1;
+      snap('Recurse <b>postorder(root.right)</b> → descend into right subtree ' + R, LP.R, [['cmp', R]]);
+      yield* post(R, cur);
+    }
+    stack[stack.length - 1].act = 2;
+    outCount++; out.push(cur); visits[cur] = outCount;
+    snap('Both subtrees are done → <b>print the root ' + cur + '</b> (result #' + outCount + ') — post-order = left → right → root', LP.out, [['out', cur]]);
+    stack.pop();
+    if (parentMsg) {
+      snap('postorder(' + cur + ') finished → return, resume postorder(' + parentMsg + ')', -1, []);
+    }
+  }
+
+  function* run() {
+    snap('Assignment: reconstruct the binary tree from <b>Pre-order A B D E C F</b> and <b>In-order D B E A F C</b>.<br>The key idea: <b>the first element of pre is always the root of the (sub)tree</b>; find it in in — everything left of it is the left subtree, everything right is the right subtree → recurse', -1, []);
+    snap('Start: call build(pre segment = everything, in segment = everything)', LB.empty, []);
+    yield* build(0, 5, 0, 5, null, null, 0);
+    phase = 'mark';
+    selPre = null; selIn = null;
+    snap('✔ The tree is built! Now <b>label</b> it: the <b>root</b> = the topmost node with no parent; <b>leaves</b> = nodes with no children', -1, []);
+    snap('<b>Root: ' + ROOT_ANS + '</b> — the first element of pre and not anyone\'s child', -1, [['root', ROOT_ANS]]);
+    for (const lf of LEAF_ANS) {
+      snap('<b>Leaf: ' + lf + '</b> — both children are NULL (a leaf of the answer tree)', -1, [['leaf', lf]]);
+    }
+    phase = 'post';
+    snap('Verification: run a <b>post-order traversal (left → right → root)</b> on the tree and print into the green box', -1, []);
+    yield* post(rootV, null);
+    snap('✔ Post-order result: <b>' + out.join(' ') + '</b>', -1, []);
+    phase = 'end';
+    snap('✔ Assignment answers: root <b>' + ROOT_ANS + '</b> · leaves <b>' + LEAF_ANS.join(' / ') + '</b> · post-order <b>' + POST_ANS.join(' ') + '</b> — everything matches!', -1,
+      POST_ANS.map(x => ['out', x]), );
+    frames[frames.length - 1].done = true;
+  }
+  const g = run(); for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { a: buildFrames() };
+/*%%LOGIC_END%%*/
+
+let mode = 'a', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1600 - (+$('#speed').value) * 80; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, a, t) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+const RANK = { D: 0, B: 1, E: 2, A: 3, F: 4, C: 5 };      // inorder rank
+const DEP = { A: 0, B: 1, C: 1, D: 2, E: 2, F: 2 };
+const pos = L => [150 + RANK[L] * 128, 90 + DEP[L] * 110];
+
+function renderLanes(f) {
+  const mk = (id, arr, sel, pick) => {
+    const row = document.getElementById(id); row.innerHTML = '';
+    arr.forEach((c, i) => {
+      const s = document.createElement('span');
+      let cls = 'L';
+      if (f.phase === 'build') {
+        if (pick === i) cls += ' root';
+        else if (sel && i >= sel[0] && i <= sel[1]) cls += ' sel';
+      }
+      s.className = cls;
+      s.textContent = c;
+      row.appendChild(s);
+    });
+  };
+  mk('preRow', PRE, f.selPre, f.rootPick !== null ? f.selPre && f.selPre[0] : null);
+  mk('inRow', IN, f.selIn, f.rootPick !== null ? IN.indexOf(f.rootPick) : null);
+}
+
+function renderTree(f) {
+  const svg = $('#tree'); svg.innerHTML = '';
+  const hot = {}, pops = new Set(), marks = new Set();
+  for (const h of f.hl) {
+    if (h[0] === 'cmp' || h[0] === 'pick' || h[0] === 'root' || h[0] === 'leaf') hot[h[1]] = true;
+    if (h[0] === 'new') { hot[h[1]] = true; pops.add(h[1]); }
+    if (h[0] === 'root') marks.add('root:' + h[1]);
+    if (h[0] === 'leaf') marks.add('leaf:' + h[1]);
+  }
+  const shown = Object.keys(f.tree);
+  const markPhase = f.phase === 'mark' || f.phase === 'post' || f.phase === 'end';
+  for (const pv in f.tree) {
+    const p = pos(pv);
+    for (const sd of ['l', 'r']) {
+      const cv = f.tree[pv][sd];
+      if (cv === null) continue;
+      const q = pos(cv);
+      svg.appendChild(el('line', { x1: p[0], y1: p[1], x2: q[0], y2: q[1], stroke: '#c3cfdc', 'stroke-width': 2 }));
+    }
+  }
+  shown.forEach(L => {
+    const xy = pos(L);
+    const seen = f.visits[L] !== undefined;
+    const isNew = pops.has(L);
+    const isCmp = !isNew && !seen && hot[L];
+    const isRoot = markPhase && L === ROOT_ANS;
+    const isLeaf = markPhase && LEAF_ANS.includes(L) && !seen;
+    if (isRoot) svg.appendChild(el('circle', { cx: xy[0], cy: xy[1], r: 31, fill: 'none', stroke: '#f0a83a', 'stroke-width': 4, 'stroke-dasharray': '6 4' }));
+    let fill = '#eef3f9', stroke = '#a9bdd4', sw = 1.8;
+    if (seen) { fill = '#1c9c57'; stroke = '#137a42'; sw = 2.8; }
+    else if (isNew) { fill = '#1c9c57'; stroke = '#137a42'; sw = 3; }
+    else if (isCmp) { fill = '#fff3d6'; stroke = '#f0a83a'; sw = 2.6; }
+    else if (isLeaf) { fill = '#e3f6ec'; stroke = '#1c9c57'; sw = 2; }
+    const g = el('g', {});
+    const c = el('circle', { cx: xy[0], cy: xy[1], r: 24, fill: fill, stroke: stroke, 'stroke-width': sw });
+    if (isNew) c.setAttribute('class', 'pop');
+    g.appendChild(c);
+    const txtCol = seen || isNew ? '#fff' : '#1c2733';
+    g.appendChild(el('text', { x: xy[0], y: xy[1] + 6, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 700, fill: txtCol }, L));
+    if (isRoot) g.appendChild(el('text', { x: xy[0], y: xy[1] - 40, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: '#92400e' }, 'ROOT'));
+    if (isLeaf && !seen) g.appendChild(el('text', { x: xy[0], y: xy[1] + 42, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: '#137a42' }, 'LEAF'));
+    if (seen) {
+      g.appendChild(el('circle', { cx: xy[0] + 28, cy: xy[1] - 28, r: 10, fill: '#f59e0b', stroke: '#fff', 'stroke-width': 1.6 }));
+      g.appendChild(el('text', { x: xy[0] + 28, y: xy[1] - 24, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: '#fff' }, String(f.visits[L])));
+    }
+    svg.appendChild(g);
+  });
+}
+
+function renderCode(f) {
+  const box = $('#codeBox'); box.innerHTML = '';
+  const sec = f.phase === 'build' ? '① reconstruct build()' : f.phase === 'mark' ? 'labelling done' : '② post-order postorder()';
+  $('#codeTag').textContent = sec;
+  CODE.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) {
+    const rows = box.querySelectorAll('.coderow');
+    const cur = rows[f.line];
+    if (cur) box.scrollTop = Math.max(0, cur.offsetTop - box.clientHeight / 2);
+  }
+}
+
+function renderStack(f) {
+  const box = $('#stackBox'); box.innerHTML = '';
+  if (!f.stack.length) {
+    const d = document.createElement('div');
+    d.className = 'stack-empty';
+    d.textContent = f.done ? '✅ all recursive calls have returned' : 'the recursion stack is empty';
+    box.appendChild(d);
+    return;
+  }
+  for (let i = f.stack.length - 1; i >= 0; i--) {
+    const fr = f.stack[i];
+    const row = document.createElement('div');
+    row.className = 'stack-row' + (i === f.stack.length - 1 ? ' top' : '');
+    const fn = document.createElement('span'); fn.className = 'fn';
+    fn.textContent = fr.kind === 'b' ? 'build' : 'postorder';
+    const cap = document.createElement('span'); cap.className = 'cap';
+    cap.textContent = fr.fn.replace('build( ', '').replace(' )', '') || fr.cap;
+    row.appendChild(fn); row.appendChild(cap);
+    box.appendChild(row);
+  }
+}
+
+function renderAnswer(f) {
+  const wrap = $('#ansChips'); wrap.innerHTML = '';
+  const pre = document.createElement('span');
+  pre.className = 'alabel';
+  pre.textContent = f.phase === 'post' || f.phase === 'end' ? 'post-order output:' : 'post-order (filled during verification):';
+  wrap.appendChild(pre);
+  for (let i = 0; i < POST_ANS.length; i++) {
+    const chip = document.createElement('span');
+    if (f.out.length > i) {
+      chip.className = 'seq-chip in';
+      chip.textContent = f.out[i];
+    } else {
+      chip.className = 'seq-chip empty';
+      chip.textContent = '·';
+    }
+    wrap.appendChild(chip);
+  }
+}
+
+function render() {
+  const f = frames[idx];
+  renderLanes(f); renderTree(f); renderCode(f); renderStack(f); renderAnswer(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  $('#phaseTag').textContent = f.phase === 'build' ? 'Phase 1 · reconstruct' : f.phase === 'mark' ? 'Phase 2 · label root/leaves' : f.phase === 'post' ? 'Phase 3 · verify with post-order' : 'Done ✔';
+  $('#modeTag').textContent = 'pre A B D E C F · in D B E A F C';
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · reconstruct the binary tree';
+  $('#chapter').textContent = 'Problem 2 · Reconstruct the Binary Tree — pre A B D E C F / in D B E A F C';
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false);
+  render();
+}
+$('#modes').addEventListener('click', e => {
+  const b = e.target.closest('.mode-pill');
+  if (b) setMode(b.dataset.mode);
+});
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => {
+  $('#speedL').textContent = speedMs() + 'ms';
+  if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); }
+});
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>

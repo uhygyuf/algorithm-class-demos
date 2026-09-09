@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tower of Hanoi — recursive solution (Problem 4)</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+
+  .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+  .toolbar .btn{border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.97fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  svg#tree{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  /* cout output area: the lecture green box, terminal look */
+  .answerbox{margin-top:8px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:46px;font-family:Consolas,monospace}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .seq-chip{min-width:40px;text-align:center;padding:7px 2px;border-radius:8px;font-size:18px;font-weight:700;background:#fff;border:1.5px solid var(--green);color:var(--green-d)}
+  .seq-chip.in{background:var(--green);color:#fff}
+  .seq-chip.empty{color:#c6d6c3;border-color:#cfe0cc;font-weight:400}
+  #caret{display:inline-block;width:8px;height:24px;background:var(--green-d);animation:blink 1s steps(1) infinite}
+  #caret.off{background:#b9d8c6;animation:none}
+  @keyframes blink{50%{opacity:0}}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.8px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:56vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .stackbox{display:flex;flex-direction:column;gap:5px;font-family:Consolas,monospace;max-height:24vh;overflow:auto}
+  .stack-row{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-left:4px solid #c9d6e4;border-radius:8px;padding:4px 10px;font-size:12.5px;background:#f8fafc}
+  .stack-row.top{border-left-color:var(--blue);background:var(--blue-pale)}
+  .stack-row .fn{font-weight:700;color:var(--blue-d);white-space:nowrap}
+  .stack-row .cap{color:var(--ink-2);font-size:11.5px;flex:1}
+  .chips{display:inline-flex;gap:3px}
+  .chip-lrv{width:17px;height:17px;border-radius:4px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;background:#e3e9f0;color:#9aa9b9}
+  .chip-lrv.done{background:var(--green);color:#fff}
+  .chip-lrv.act{background:var(--blue);color:#fff;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(15,93,168,.4)}50%{box-shadow:0 0 0 5px rgba(15,93,168,0)}}
+  .stack-empty{color:#a8b6c4;font-size:12.5px;text-align:center;padding:10px 0;font-family:inherit}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc .r{color:#c0392b}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2:hover{filter:brightness(.97)}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes popIn{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+  .pop{transform-box:fill-box;transform-origin:center;animation:popIn .5s ease}
+
+  #ansChips{display:block !important;width:100%}
+  .tlog{font-family:Consolas,monospace;font-size:13px;line-height:1.7;color:var(--green-d)}
+  .tlog.tlog-hdr{color:var(--ink-2);font-size:11.5px;font-weight:700}
+  .tlog.hot{background:#fff;border-radius:6px;padding:0 6px;font-weight:700}
+  .tlog.done{color:#0b3d6e;font-weight:700;background:#fff;border-radius:6px;padding:0 6px;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== header ========== -->
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures · Assignment · Problem 4</div>
+    <h1>Problem 4: Tower of Hanoi — a recursive solution</h1>
+    <div class="chapter" id="chapter">A (source) → C (destination), B (auxiliary); solve it with the recursive hanoi() and print every move</div>
+        <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="m3">1. n = 3 <small>the assignment example</small></button>
+      <button class="mode-pill" data-mode="m2">2. n = 2 <small>understand the small case first</small></button>
+      <button class="mode-pill" data-mode="m4">3. n = 4 <small>15 moves</small></button>
+    </div>    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html" class="on">8. Tower of Hanoi</a>
+    </div></header>
+
+  <div class="grid">
+    <!-- ========== left column ========== -->
+    <div class="lcol">
+      <div class="card">
+                <h3>🎯 The three rods <span class="tag" id="modeTag"></span></h3>
+        <svg id="tree" viewBox="0 0 940 320" preserveAspectRatio="xMidYMid meet"></svg>
+                <div class="legend">
+          <span><span class="dot" style="background:#0f5da8"></span>disk 1 (smallest, on top)</span>
+          <span><span class="dot" style="background:#1c9c57"></span>disk 2</span>
+          <span><span class="dot" style="background:#f0a83a"></span>disk 3</span>
+          <span><span class="dot" style="background:#8e44ad"></span>disk 4 (largest, at the bottom)</span>
+          <span><span style="display:inline-block;width:12px;height:12px;border:3px solid #f59e0b;border-radius:3px;margin-right:4px;vertical-align:-2px"></span>the disk that just moved</span>
+          <span>move only the top disk of a rod · never place a larger disk on a smaller one</span>
+        </div>
+        <div class="answerbox" id="answerBox"><span id="ansChips" style="display:flex;gap:6px;flex-wrap:wrap"></span><span id="caret" class="off"></span></div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <!-- ========== right column ========== -->
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 Lecture C++ code (whole program) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+                <div class="code-foot">Yellow = current line. Recursion in three steps: ① n−1 disks from→aux ② disk n from→to ③ n−1 disks aux→to. The green box below is the cout terminal.</div>
+      </div>
+      <div class="card">
+                <h3>🥞 Recursion call stack <span class="tag">hanoi(n, from, aux, to)</span></h3>
+        <div class="stackbox" id="stackBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== player controls ========== -->
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Problem 4: Tower of Hanoi (assignment, recursion)
+ * rods A (source), B (auxiliary), C (destination); hanoi(n, from, aux, to)
+ * the n = 3 output must match the assignment example verbatim
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const MODES = {
+  m3: { n: 3, label: 'n = 3 (assignment example)' },
+  m2: { n: 2, label: 'n = 2' },
+  m4: { n: 4, label: 'n = 4' }
+};
+const CODE = [
+  'void hanoi(int n, char from, char aux, char to) {',
+  '    if (n == 1) {',
+  '        cout << "Move disk 1 from " << from << " to " << to << endl;',
+  '        return;',
+  '    }',
+  '    // first move the top n-1 disks: from → aux (to acts as the spare)',
+  '    hanoi(n - 1, from, to, aux);',
+  '    cout << "Move disk " << n << " from " << from << " to " << to << endl;',
+  '    // then move those n-1 disks: aux → to',
+  '    hanoi(n - 1, aux, from, to);',
+  '}',
+  '',
+  'int main() {',
+  '    int n;',
+  '    cin >> n;',
+  '    hanoi(n, \'A\', \'B\', \'C\');   // move all from A to C; B is the auxiliary',
+  '    return 0;',
+  '}'
+];
+const LN = { baseIf: 1, baseOut: 2, lCall: 6, midOut: 7, rCall: 9, cinN: 15, call: 16 };
+
+// independent reference: generate the full move list (used by tests and the final check)
+function naive(n, from, aux, to) {
+  const list = [];
+  (function h(n, f, a, t) {
+    if (n === 1) { list.push('Move disk 1 from ' + f + ' to ' + t); return; }
+    h(n - 1, f, t, a);
+    list.push('Move disk ' + n + ' from ' + f + ' to ' + t);
+    h(n - 1, a, f, t);
+  })(n, from, aux, to);
+  return list;
+}
+
+function buildFrames(modeKey) {
+  const M = MODES[modeKey], n = M.n;
+  const frames = [];
+  let phase = 'run';
+  const stack = [], log = [];
+  const rods = { A: [], B: [], C: [] };
+  for (let d = n; d >= 1; d--) rods.A.push(d);   // rod A, bottom-up n..1
+  let hot = null, moves = 0;
+
+  function snap(msg, line, extra) {
+    frames.push(Object.assign({
+      msg, line, phase, done: false, log: log.slice(), moves: moves,
+      rods: { A: rods.A.slice(), B: rods.B.slice(), C: rods.C.slice() },
+      stack: stack.map(r => Object.assign({}, r)), hot: hot
+    }, extra || {}));
+  }
+  const rodName = { A: 'A', B: 'B', C: 'C' };
+
+  function doMove(disk, from, to) {
+    const d = rods[from].pop();
+    if (d !== disk) throw new Error('trying to move disk ' + disk + ' but top is ' + d);
+    // rule 3: a larger disk may not sit on a smaller one
+    const top = rods[to].length ? rods[to][rods[to].length - 1] : null;
+    if (top !== null && top < disk) throw new Error('illegal: disk ' + disk + ' onto smaller ' + top);
+    rods[to].push(disk);
+    moves++;
+    const txt = 'Move disk ' + disk + ' from ' + from + ' to ' + to;
+    log.push(txt);
+    hot = { disk: disk, from: from, to: to };
+    return txt;
+  }
+
+  function* hanoi(cur, from, aux, to, isTop) {
+    stack.push({ kind: 'h', fn: 'hanoi(' + cur + ', ' + from + ', ' + aux + ', ' + to + ')', cap: '' });
+    if (cur === 1) {
+      snap('Calling <b>hanoi(1, ' + from + ', ' + aux + ', ' + to + ')</b> → n == 1: the smallest disk can simply move', LN.baseIf, []);
+      const txt = doMove(1, from, to);
+      snap('Run the <b>cout</b>: <b>' + txt + '</b> — move it from ' + from + ' to ' + to, LN.baseOut, []);
+    } else {
+      snap('Calling <b>hanoi(' + cur + ', ' + from + ', ' + aux + ', ' + to + ')</b> → n = ' + cur + ' &gt; 1, split into 3 steps:<br>① the ' + (cur - 1) + ' disks above: ' + from + '→' + aux + '　② big disk ' + cur + ': ' + from + '→' + to + '　③ those ' + (cur - 1) + ' disks: ' + aux + '→' + to, LN.baseIf, []);
+      snap('Step ①: recurse <b>hanoi(' + (cur - 1) + ', ' + from + ', ' + to + ', ' + aux + ')</b> — move the ' + (cur - 1) + ' top disks from ' + from + ' to ' + aux + ' (using ' + to + ' as the spare)', LN.lCall, []);
+      yield* hanoi(cur - 1, from, to, aux, false);
+      const txt = doMove(cur, from, to);
+      snap('Step ②: <b>Move disk ' + cur + ' from ' + from + ' to ' + to + '</b> — the largest disk ' + cur + ' moves straight across (it may sit on anything)', LN.midOut, []);
+      snap('Step ③: recurse <b>hanoi(' + (cur - 1) + ', ' + aux + ', ' + from + ', ' + to + ')</b> — move the ' + (cur - 1) + ' disks on ' + aux + ' to ' + to, LN.rCall, []);
+      yield* hanoi(cur - 1, aux, from, to, false);
+    }
+    stack.pop();
+    if (isTop) {
+      phase = 'end';
+      snap('✔ The hanoi call from main is done — <b>' + moves + '</b> moves in total (= 2^' + n + ' − 1). All disks moved from A to C correctly (matching the assignment output)!', -1, []);
+      frames[frames.length - 1].done = true;
+    } else {
+      snap('hanoi(' + cur + ', ' + from + ', ' + aux + ', ' + to + ') finished → <b>return</b>, pop the stack and resume the caller', -1, []);
+    }
+  }
+
+  function* run() {
+    snap('Tower of Hanoi — n disks are stacked on rod A (largest at the bottom, smallest on top). Using B, move all of them to C.<b>Rules</b>: move one disk at a time · only the top disk of a rod may move · never put a larger disk on a smaller one.', -1, []);
+    snap('main: read the number of disks n = <b>' + n + '</b> → call <b>hanoi(' + n + ', \'A\', \'B\', \'C\')</b>', LN.cinN, []);
+    snap('Enter the recursion. Initially rod A = ' + rods.A.join(' ') + ' (bottom-up); B and C are empty', LN.call, []);
+    yield* hanoi(n, 'A', 'B', 'C', true);
+  }
+  const g = run(); for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { m3: buildFrames('m3'), m2: buildFrames('m2'), m4: buildFrames('m4') };
+/*%%LOGIC_END%%*/
+
+let mode = 'm3', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, a, t) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+const RODX = { A: 165, B: 470, C: 775 };
+const GROUND = 252, DH = 26, DHH = 13;
+const DISKCOL = ['#0f5da8', '#1c9c57', '#f0a83a', '#8e44ad', '#c0392b'];
+
+function renderRods(f) {
+  const svg = $('#tree'); svg.innerHTML = '';
+  const mx = MODES[mode].n;
+  const wOf = s => 58 + s * Math.min(40, 200 / mx);
+  // base plate + the three rods
+  svg.appendChild(el('rect', { x: 40, y: GROUND, width: 860, height: 8, rx: 3, fill: '#0b3d6e' }));
+  for (const r of ['A', 'B', 'C']) {
+    svg.appendChild(el('rect', { x: RODX[r] - 5, y: 60, width: 10, height: GROUND - 60, rx: 3, fill: '#c3cfdc' }));
+    svg.appendChild(el('text', { x: RODX[r], y: GROUND + 26, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700, fill: '#0f5da8' }, r + ' ' + (r === 'A' ? '(source)' : r === 'B' ? '(aux)' : '(target)')));
+  }
+  for (const r of ['A', 'B', 'C']) {
+    const arr = f.rods[r];
+    for (let i = 0; i < arr.length; i++) {
+      const disk = arr[i];
+      const w = wOf(disk);
+      const yTop = GROUND - DH * (i + 1);
+      const isHot = f.hot && f.hot.disk === disk && i === arr.length - 1 && f.hot.to === r;
+      const g = el('g', {});
+      const rc = el('rect', { x: RODX[r] - w / 2, y: yTop, width: w, height: DH - 2, rx: 5, fill: DISKCOL[(disk - 1) % DISKCOL.length] });
+      if (isHot) rc.setAttribute('stroke', '#f59e0b'); if (isHot) rc.setAttribute('stroke-width', '3');
+      g.appendChild(rc);
+      g.appendChild(el('text', { x: RODX[r], y: yTop + DHH + 2, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: '#fff' }, String(disk)));
+      svg.appendChild(g);
+    }
+  }
+}
+
+function renderCode(f) {
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = 'recursive hanoi() · n = ' + MODES[mode].n;
+  CODE.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) {
+    const rows = box.querySelectorAll('.coderow');
+    const cur = rows[f.line];
+    if (cur) box.scrollTop = Math.max(0, cur.offsetTop - box.clientHeight / 2);
+  }
+}
+
+function renderStack(f) {
+  const box = $('#stackBox'); box.innerHTML = '';
+  if (!f.stack.length) {
+    const d = document.createElement('div');
+    d.className = 'stack-empty';
+    d.textContent = f.done ? '✅ every recursive call has returned; stack empty' : 'call stack is empty';
+    box.appendChild(d);
+    return;
+  }
+  for (let i = f.stack.length - 1; i >= 0; i--) {
+    const fr = f.stack[i];
+    const row = document.createElement('div');
+    row.className = 'stack-row' + (i === f.stack.length - 1 ? ' top' : '');
+    const fn = document.createElement('span'); fn.className = 'fn';
+    fn.textContent = fr.fn;
+    const cap = document.createElement('span'); cap.className = 'cap';
+    cap.textContent = fr.cap || '…';
+    row.appendChild(fn); row.appendChild(cap);
+    box.appendChild(row);
+  }
+}
+
+function renderLog(f) {
+  const wrap = $('#ansChips'); wrap.innerHTML = '';
+  const pre = document.createElement('div');
+  pre.className = 'tlog tlog-hdr';
+  pre.textContent = 'cout terminal — ' + f.moves + ' line(s) printed so far:';
+  wrap.appendChild(pre);
+  f.log.forEach((line, i) => {
+    const d = document.createElement('div');
+    d.className = 'tlog';
+    if (i === f.log.length - 1 && !f.done) d.className = 'tlog hot';
+    d.textContent = line;
+    wrap.appendChild(d);
+  });
+  if (f.done) {
+    const d = document.createElement('div');
+    d.className = 'tlog done';
+    d.textContent = '✔ all done · ' + MODES[mode].n + ' disks, ' + f.moves + ' moves (2^' + MODES[mode].n + ' − 1)';
+    wrap.appendChild(d);
+  }
+}
+
+function render() {
+  const f = frames[idx];
+  renderRods(f); renderCode(f); renderStack(f); renderLog(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  const M = MODES[mode];
+  $('#phaseTag').textContent = f.done ? 'Done ✔' : 'recursing · ' + f.moves + ' moves so far';
+  $('#modeTag').textContent = M.label;
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · ' + M.label;
+  $('#chapter').textContent = 'Problem 4 · Tower of Hanoi — n = ' + M.n + ' (A source → C target, B auxiliary)';
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false);
+  render();
+}
+$('#modes').addEventListener('click', e => {
+  const b = e.target.closest('.mode-pill');
+  if (b) setMode(b.dataset.mode);
+});
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => {
+  $('#speedL').textContent = speedMs() + 'ms';
+  if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); }
+});
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('m3');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>
