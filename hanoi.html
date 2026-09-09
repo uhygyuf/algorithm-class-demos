@@ -113,6 +113,7 @@
       <button class="mode-pill active" data-mode="m3">1. n = 3 <small>the assignment example</small></button>
       <button class="mode-pill" data-mode="m2">2. n = 2 <small>understand the small case first</small></button>
       <button class="mode-pill" data-mode="m4">3. n = 4 <small>15 moves</small></button>
+      <button class="mode-pill" data-mode="m5">4. n = 5 <small>31 moves</small></button>
     </div>    <div class="nav">
       <a href="index.html">1. Tree traversals</a>
       <a href="bst.html">2. Binary Search Tree</a>
@@ -134,7 +135,8 @@
           <span><span class="dot" style="background:#0f5da8"></span>disk 1 (smallest, on top)</span>
           <span><span class="dot" style="background:#1c9c57"></span>disk 2</span>
           <span><span class="dot" style="background:#f0a83a"></span>disk 3</span>
-          <span><span class="dot" style="background:#8e44ad"></span>disk 4 (largest, at the bottom)</span>
+          <span><span class="dot" style="background:#8e44ad"></span>disk 4</span>
+          <span><span class="dot" style="background:#c0392b"></span>disk 5 (largest, at the bottom — when n = 5)</span>
           <span><span style="display:inline-block;width:12px;height:12px;border:3px solid #f59e0b;border-radius:3px;margin-right:4px;vertical-align:-2px"></span>the disk that just moved</span>
           <span>move only the top disk of a rod · never place a larger disk on a smaller one</span>
         </div>
@@ -185,7 +187,8 @@
 const MODES = {
   m3: { n: 3, label: 'n = 3 (assignment example)' },
   m2: { n: 2, label: 'n = 2' },
-  m4: { n: 4, label: 'n = 4' }
+  m4: { n: 4, label: 'n = 4' },
+  m5: { n: 5, label: 'n = 5' }
 };
 const CODE = [
   'void hanoi(int n, char from, char aux, char to) {',
@@ -287,7 +290,7 @@ function buildFrames(modeKey) {
   const g = run(); for (;;) { if (g.next().done) break; }
   return frames;
 }
-const CACHE = { m3: buildFrames('m3'), m2: buildFrames('m2'), m4: buildFrames('m4') };
+const CACHE = { m3: buildFrames('m3'), m2: buildFrames('m2'), m4: buildFrames('m4'), m5: buildFrames('m5') };
 /*%%LOGIC_END%%*/
 
 let mode = 'm3', frames = CACHE[mode], idx = 0;
