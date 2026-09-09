@@ -9,11 +9,13 @@ network required. Open any file in a browser and it runs.
 | File | Topic | What it animates |
 |---|---|---|
 | `index.html` | Binary Tree Traversals | Inorder / Preorder / Postorder recursion, frame by frame: tree, highlighted C++ code, a **live call-stack expansion** (each `inorder(v)` call becomes a frame with Left/Root/Right progress lights), and the output sequence filling in a green box — exactly the trace the lecture builds on the whiteboard. Includes a **quiz mode** that hides the answer as `? ? ? ? ? ? ?` until you reveal it. |
+| `bst.html` | Binary Search Tree — insert / inorder | Runs the slide's **whole C++ program** line by line (`struct Node` + `inorder`/`insert`/`search` + `main`): watch the 7 recursive `insert` calls grow the tree, then `inorder` fills the green box with `20 30 40 50 60 70 80`. Header button switches to the slide's bottom question — **If 70 20 30 50 40 80 60 ?** — a different insert order that builds a completely different tree shape, yet inorder still prints the sorted sequence (the point of the lecture). |
 | `hash-linear-probing.html` | Hash Table — Linear Probing | The lecture's `HashTable` class with `TABLE_SIZE = 10`, `EMPTY = -1`, `h(key) = key % 10`. Watch every `insert`: a collision lights up the red **`index = (index + 1) % TABLE_SIZE`** line and probes slot by slot, wrapping from 9 back to 0. `search` demos both stop rules (empty slot / full loop back to `start`). |
 | `hash-stl.html` | STL `unordered_map` | Executes the lecture's `main()` line by line: declare `unordered_map<string,int>`, insert apple/banana/orange with `operator[]`, check existence with `find() != end()`, iterate with range-for, `erase("banana")`, print `size()`. The left panel shows the live table contents and a cout terminal prints every output as it happens. |
 
 Sample data matches the lecture slides: the complete binary tree 1–7, the
-15→25→35… probing sequence, and the apple/banana/orange map.
+15→25→35… probing sequence, the apple/banana/orange map, and the BST built from
+`50 30 70 20 40 60 80` (plus its quiz variant `70 20 30 50 40 80 60`).
 
 ## Controls (all demos)
 
@@ -35,6 +37,7 @@ plus independent-simulation checks for the hash demos).
 
 ```
 index.html                  tree traversals (in/pre/post) + call stack + quiz
+bst.html                    binary search tree: insert builds + inorder prints sorted
 hash-linear-probing.html    linear probing insert & search
 hash-stl.html               unordered_map usage with live cout terminal
 ```

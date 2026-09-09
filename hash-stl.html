@@ -195,7 +195,7 @@ function buildFrames() {
 let frames = buildFrames(), idx = 0;
 let playing = false, timer = null;
 const $ = s => document.querySelector(s);
-function speedMs() { return 1700 - (+$('speed').value) * 85; }
+function speedMs() { return 1700 - (+$('#speed').value) * 85; }
 function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
 function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(() => { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }, speedMs()); }
 

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Search Tree — insert / search / inorder · Interactive Demo</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+
+  .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+  .toolbar .btn{border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.97fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  svg#tree{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  /* cout output area: the lecture green box, styled like a terminal */
+  .answerbox{margin-top:8px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:46px;font-family:Consolas,monospace}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .seq-chip{min-width:40px;text-align:center;padding:7px 2px;border-radius:8px;font-size:18px;font-weight:700;background:#fff;border:1.5px solid var(--green);color:var(--green-d)}
+  .seq-chip.in{background:var(--green);color:#fff}
+  .seq-chip.empty{color:#c6d6c3;border-color:#cfe0cc;font-weight:400}
+  #caret{display:inline-block;width:8px;height:24px;background:var(--green-d);animation:blink 1s steps(1) infinite}
+  #caret.off{background:#b9d8c6;animation:none}
+  @keyframes blink{50%{opacity:0}}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.8px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:56vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .stackbox{display:flex;flex-direction:column;gap:5px;font-family:Consolas,monospace;max-height:24vh;overflow:auto}
+  .stack-row{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-left:4px solid #c9d6e4;border-radius:8px;padding:4px 10px;font-size:12.5px;background:#f8fafc}
+  .stack-row.top{border-left-color:var(--blue);background:var(--blue-pale)}
+  .stack-row .fn{font-weight:700;color:var(--blue-d);white-space:nowrap}
+  .stack-row .cap{color:var(--ink-2);font-size:11.5px;flex:1}
+  .chips{display:inline-flex;gap:3px}
+  .chip-lrv{width:17px;height:17px;border-radius:4px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;background:#e3e9f0;color:#9aa9b9}
+  .chip-lrv.done{background:var(--green);color:#fff}
+  .chip-lrv.act{background:var(--blue);color:#fff;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(15,93,168,.4)}50%{box-shadow:0 0 0 5px rgba(15,93,168,0)}}
+  .stack-empty{color:#a8b6c4;font-size:12.5px;text-align:center;padding:10px 0;font-family:inherit}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc .r{color:#c0392b}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2:hover{filter:brightness(.97)}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes popIn{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+  .pop{transform-box:fill-box;transform-origin:center;animation:popIn .5s ease}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== header ========== -->
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures</div>
+    <h1>Binary Search Tree in C++ — Interactive Demo</h1>
+    <div class="chapter" id="chapter">4. Binary Tree in Data Structure · lecture code: struct Node + inorder / insert / search + main</div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. Example (slide) <small>insert 50 30 70 20 40 60 80</small></button>
+      <button class="mode-pill" data-mode="b">2. Quiz <small>If 70 20 30 50 40 80 60 ?</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html" class="on">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- ========== left column: tree + cout output ========== -->
+    <div class="lcol">
+      <div class="card">
+        <h3>🌳 Binary search tree (grows as values are inserted) <span class="tag" id="modeTag"></span></h3>
+        <svg id="tree" viewBox="0 0 940 545" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="legend">
+          <span><span class="dot" style="background:#eef3f9;border:1px solid #a9bdd4"></span>node already inserted</span>
+          <span><span class="dot" style="background:var(--amber-pale);border:1.5px solid var(--amber)"></span>comparing value with root-&gt;data (go left / right)</span>
+          <span><span class="dot" style="background:#1c9c57"></span>node just created (pops in)</span>
+          <span><span class="dot" style="background:#1c9c57"></span>already printed by inorder (cout)</span>
+          <span><span style="background:#f59e0b;color:#fff;font-size:9.5px;width:15px;height:15px;line-height:15px;text-align:center;border-radius:50%;display:inline-block;margin-right:2px">1</span>orange badge = output order</span>
+          <span style="font-family:Consolas">left subtree &lt; root ≤ right subtree</span>
+        </div>
+        <div class="answerbox" id="answerBox"><span id="ansChips" style="display:flex;gap:6px;flex-wrap:wrap"></span><span id="caret" class="off"></span></div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <!-- ========== right column: full lecture code + call stack ========== -->
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 Lecture C++ code (the whole program) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow row = current line (auto-scrolls) · verbatim lecture code: insert builds the tree recursively, then inorder (left→root→right) fills the green box with the sorted sequence</div>
+      </div>
+      <div class="card">
+        <h3>🥞 Recursion call stack <span class="tag">insert frames · inorder Left/Root/Right lights</span></h3>
+        <div class="stackbox" id="stackBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== player controls ========== -->
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Binary Search Tree interactive demo — follows the lecture slide (UESTC Data Structures) verbatim
+ * whole program from the slide: struct Node + inorder / insert / search + main
+ * main inserts 50 30 70 20 40 60 80 → inorder prints 20…80 (green box)
+ * bottom question "If 70 20 30 50 40 80 60 ?" → the button in the header switches insert order:
+ *   the shape changes but inorder of a BST is always sorted (the point of the slide)
+ * frame = {msg,line,hl,stack,built,visits,out,adj,prefix,caret,phase,done}
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const SORTED = [20, 30, 40, 50, 60, 70, 80];
+const RANK = {20:0, 30:1, 40:2, 50:3, 60:4, 70:5, 80:6};
+const pos = (v, d) => [122 + RANK[v] * 116, 72 + d * 96];   // x by inorder rank, y by depth
+
+// whole program, verbatim from the slide
+const CODE_HEAD = [
+  '#include <iostream>',
+  'using namespace std;',
+  '',
+  'struct Node {',
+  '    int data;',
+  '    Node* left;',
+  '    Node* right;',
+  '',
+  '    Node(int value) {',
+  '        data = value;',
+  '        left = right = NULL;',
+  '    }',
+  '};',
+  '',
+  'void inorder(Node* root) {',
+  '    if (root == NULL) return;',
+  '    inorder(root->left);',
+  '    cout << root->data << " ";',
+  '    inorder(root->right);',
+  '}',
+  '',
+  'Node* insert(Node* root, int value) {',
+  '    if (root == NULL) return new Node(value);',
+  '    if (value < root->data)',
+  '        root->left = insert(root->left, value);',
+  '    else',
+  '        root->right = insert(root->right, value);',
+  '    return root;',
+  '}',
+  '',
+  'bool search(Node* root, int key) {',
+  '    if (root == NULL) return false;',
+  '    if (root->data == key) return true;',
+  '    return key < root->data ? search(root->left, key) : search(root->right, key);',
+  '}',
+  '',
+  'int main() {',
+  '    Node* root = NULL;'
+];
+const CODE_TAIL = [
+  '',
+  '    cout << "Inorder insertion: ";',
+  '    inorder(root);',
+  '    cout << endl;',
+  '    return 0;',
+  '}'
+];
+const codeLines = seq => CODE_HEAD.concat(
+  seq.map(v => '    root = insert(root, ' + v + ');'),
+  CODE_TAIL
+);
+// key line indices (0-based; on-screen line number = index + 1)
+const LN = {
+  mainOpen: 36, rootNull: 37, cout: 46, inoCall: 47, endl: 48, ret0: 49,
+  iIfn: 22, iCmp: 23, iLc: 24, iRc: 26, iRet: 27,
+  oIfn: 15, oLc: 16, oOut: 17, oRc: 18
+};
+
+// the two insert orders (a = slide example, b = the slide bottom question)
+const MODES = {
+  a: { label: 'Example', seq: [50, 30, 70, 20, 40, 60, 80] },
+  b: { label: 'Quiz: If 70 20 30 50 40 80 60 ?', seq: [70, 20, 30, 50, 40, 80, 60] }
+};
+
+// independent reference simulation: build the BST, get depth of each value + final tree + inorder
+// (shared by tests and the animation, so the animation shows the true algorithm)
+function naiveSim(seq) {
+  const tree = {};            // value -> {l, r}
+  const depth = {};
+  let root = null;
+  for (const v of seq) {
+    tree[v] = { l: null, r: null };
+    if (root === null) { root = v; depth[v] = 0; continue; }
+    let cur = root, d = 0;
+    for (;;) {
+      d++;
+      if (v < cur) {
+        if (tree[cur].l === null) { tree[cur].l = v; depth[v] = d; break; }
+        cur = tree[cur].l;
+      } else {
+        if (tree[cur].r === null) { tree[cur].r = v; depth[v] = d; break; }
+        cur = tree[cur].r;
+      }
+    }
+  }
+  const inorder = [];
+  (function go(x) { if (x === null) return; go(tree[x].l); inorder.push(x); go(tree[x].r); })(root);
+  return { root, tree, depth, inorder };
+}
+for (const k in MODES) MODES[k].sim = naiveSim(MODES[k].seq);
+
+// ---------- frame generation (pure logic, no DOM) ----------
+function buildFrames(modeKey) {
+  const M = MODES[modeKey], seq = M.seq;
+  const code = codeLines(seq);
+  const frames = [];
+  let phase = 'build', prefix = false, caret = false;
+  const stack = [], built = [], visits = {}, out = [];
+  const tree = {}, depth = M.sim.depth;
+  let rootV = null, insCount = 0, outCount = 0;
+
+  function snap(msg, line, hl) {
+    frames.push({
+      msg, line, hl: hl || [], phase, prefix, caret, done: false,
+      stack: stack.map(r => ({ kind: r.kind, fn: r.fn, cap: r.cap, act: r.act })),
+      built: built.slice(), visits: Object.assign({}, visits), out: out.slice(),
+      adj: JSON.parse(JSON.stringify(tree))
+    });
+  }
+  const push = (kind, fn, cap, act) => stack.push({ kind, fn, cap, act });
+  const pop = () => stack.pop();
+  const sideL = n => (n === null ? 'NULL' : 'left subtree ' + n);
+  const sideR = n => (n === null ? 'NULL' : 'right subtree ' + n);
+
+  function* walkIns(cur, val) {          // cur: current subtree root (may be NULL)
+    if (cur === null) {
+      // L23 holds: return new Node(value)
+      push('ins', 'insert(NULL, ' + val + ')', 'L23 holds → return new Node(' + val + ')');
+      tree[val] = { l: null, r: null };
+      built.push(val); insCount++;
+      if (rootV === null) {
+        rootV = val;
+        snap('Calling <b>insert(NULL, ' + val + ')</b> → L23: <b>root == NULL</b> holds! Run <b>return new Node(' + val + ')</b> — the new node <b>' + val + '</b> pops in and is assigned to root in main → it becomes the <b>root of the whole tree</b>', LN.iIfn, [['new', val]]);
+      } else {
+        snap('Calling <b>insert(NULL, ' + val + ')</b> → L23: <b>root == NULL</b> holds! <b>return new Node(' + val + ')</b> creates the new node', LN.iIfn, [['new', val]]);
+      }
+      pop();
+      return;
+    }
+    // non-null node: L23 check fails, compare at L24
+    push('ins', 'insert(' + cur + ', ' + val + ')', 'null check passed → compare ' + val + ' with ' + cur);
+    snap('Entering <b>insert(root=' + cur + ', value=' + val + ')</b> → L23: root == NULL? root is <b>' + cur + '</b>, not NULL → continue at L24', LN.iIfn, []);
+    const goLeft = val < cur;
+    snap('L24: <b>' + val + (goLeft ? ' &lt; ' : ' ≥ ') + cur + '</b> → go to the <b>' + (goLeft ? 'left' : 'right') + ' subtree</b> (BST rule: smaller goes left, larger/equal goes right)', LN.iCmp, [['cmp', cur]]);
+    if (goLeft) {
+      const child = tree[cur].l;
+      snap('L25: <b>root-&gt;left = insert(root-&gt;left, ' + val + ')</b> — first call insert(' + (child === null ? 'NULL' : child) + ', ' + val + '), descending into the <b>' + sideL(child) + '</b>', LN.iLc, []);
+      yield* walkIns(child, val);
+      // child returned → assignment completes (if the slot was NULL the new node is linked under tree[cur].l)
+      tree[cur].l = child === null ? val : child;
+      snap('insert(' + (child === null ? 'NULL' : child) + ', ' + val + ') returned' + (child === null ? ' — new node <b>' + val + '</b> now linked as the <b>left child</b> of ' + cur : ' (subtree root is still ' + child + ', unchanged)') + ' → this level continues at L28', LN.iRet, []);
+    } else {
+      const child = tree[cur].r;
+      snap('L27: <b>root-&gt;right = insert(root-&gt;right, ' + val + ')</b> — first call insert(' + (child === null ? 'NULL' : child) + ', ' + val + '), descending into the <b>' + sideR(child) + '</b>', LN.iRc, []);
+      yield* walkIns(child, val);
+      tree[cur].r = child === null ? val : child;
+      snap('insert(' + (child === null ? 'NULL' : child) + ', ' + val + ') returned' + (child === null ? ' — new node <b>' + val + '</b> now linked as the <b>right child</b> of ' + cur : ' (subtree root is still ' + child + ', unchanged)') + ' → this level continues at L28', LN.iRet, []);
+    }
+    snap('L28: <b>return root</b> (still ' + cur + ') → pop the stack and return to the caller', LN.iRet, [['cmp', cur]]);
+    pop();
+  }
+
+  function* walkIno(cur, parentMsg) {
+    push('ino', 'inorder(' + cur + ')', 'null check passed → run Left → Root → Right', -1);
+    snap('Calling <b>inorder(' + cur + ')</b> → L16: root == NULL? not NULL → continue (recursion starts)', LN.oIfn, [['cmp', cur]]);
+    // left subtree
+    const L = tree[cur].l;
+    if (L === null) {
+      snap('inorder(' + cur + ') has no left subtree (<b>NULL</b>) → inorder(NULL) returns immediately at line 1 — nothing is printed', LN.oIfn, []);
+    } else {
+      stack[stack.length - 1].act = 0;
+      snap('L17: recurse <b>inorder(root-&gt;left)</b> → descend into left subtree ' + L, LN.oLc, [['cmp', L]]);
+      yield* walkIno(L, cur);
+    }
+    // root: print via cout
+    stack[stack.length - 1].act = 1;
+    outCount++; out.push(cur); visits[cur] = outCount;
+    snap('L18: <b>cout &lt;&lt; root-&gt;data</b> → print <b>' + cur + '</b> (result #' + outCount + ')', LN.oOut, [['out', cur]]);
+    // right subtree
+    const R = tree[cur].r;
+    if (R === null) {
+      snap('inorder(' + cur + ') has no right subtree (<b>NULL</b>) → inorder(NULL) returns immediately at line 1 — nothing is printed', LN.oIfn, []);
+    } else {
+      stack[stack.length - 1].act = 2;
+      snap('L19: recurse <b>inorder(root-&gt;right)</b> → descend into right subtree ' + R, LN.oRc, [['cmp', R]]);
+      yield* walkIno(R, cur);
+    }
+    pop();
+    if (parentMsg) {
+      snap('inorder(' + cur + ') finished → <b>return</b>, pop the stack, resume inorder(' + parentMsg + ')', -1, [['cmp', parentMsg]]);
+    }
+  }
+
+  function* run() {
+    snap('The whole lecture program: <b>struct Node</b> + <b>inorder / insert / search</b> + main.<br>main inserts <b>' + seq.join(' ') + '</b> one by one with insert(), then runs inorder — watch what it prints', -1, []);
+    snap('Executing <b>int main() {</b> — the program starts here', LN.mainOpen, []);
+    snap('L38: <b>Node* root = NULL;</b> — the tree starts empty (root pointer is NULL)', LN.rootNull, []);
+    for (let k = 0; k < seq.length; k++) {
+      const v = seq[k];
+      const isFirst = (rootV === null);
+      snap('Insert ' + (k + 1) + ' of 7: <b>' + v + '</b> → run <b>root = insert(root, ' + v + ')</b>' + (isFirst ? ' (root is NULL right now)' : ' (root points to ' + rootV + ')') + ', calling insert()', LN.mainOpen + 2 + k, []);
+      if (isFirst) {
+        yield* walkIns(null, v);
+      } else {
+        yield* walkIns(rootV, v);
+      }
+      if (rootV === null) { /* the NULL branch of walkIns already set rootV */ }
+      // after the top-level walkIns returns, this assignment is done (root unchanged except the first time)
+    }
+    phase = 'scan'; prefix = true; caret = true;
+    snap('All 7 values inserted — <b>the tree is built!</b> This is exactly the tree drawn on the slide.<br>Back in main → L47: <b>cout &lt;&lt; "Inorder insertion: ";</b> prints the prefix first', LN.cout, []);
+    snap('L48: call <b>inorder(root)</b> (root = ' + rootV + ') → start the <b>inorder traversal</b>: Left → Root → Right', LN.inoCall, [['cmp', rootV]]);
+    yield* walkIno(rootV, null);
+    caret = false;
+    snap('inorder(root) finished, back in main → L49: <b>cout &lt;&lt; endl;</b> newline (cursor moves to the next line)', LN.endl, []);
+    snap('L50: <b>return 0;</b> — the program exits normally ✔', LN.ret0, []);
+    phase = 'end';
+    snap(MODE_FINAL[modeKey] + '<br><b>Takeaway: inorder of a BST always prints values in ascending order</b> — the insert order only changes the shape, never the inorder output', -1,
+      SORTED.map(v => ['out', v]), );
+    frames[frames.length - 1].done = true;
+  }
+  const MODE_FINAL = {
+    a: '✔ Slide green-box answer: <b>20 30 40 50 60 70 80</b> — a perfect match!',
+    b: '✔ Quiz revealed: with a different insert order the <b>tree shape is completely different</b> (70 becomes the root and pulls out a long chain),<br>yet inorder still prints <b>20 30 40 50 60 70 80</b>!'
+  };
+  const g = run(); for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { a: buildFrames('a'), b: buildFrames('b') };
+/*%%LOGIC_END%%*/
+
+/* ============ playback state ============ */
+let mode = 'a', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+
+function speedMs() { return 1650 - (+$('#speed').value) * 80; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+/* ============ rendering ============ */
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, a, t) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+
+function renderTree(f) {
+  const svg = $('#tree'); svg.innerHTML = '';
+  const dep = MODES[mode].sim.depth;             // depth of each value in the final tree (fixed at insertion)
+  const hot = {}, pops = new Set();
+  for (const h of f.hl) {
+    if (h[0] === 'cmp' || h[0] === 'out') hot[h[1]] = true;
+    if (h[0] === 'new') { hot[h[1]] = true; pops.add(h[1]); }
+  }
+  // edges
+  for (const pv in f.adj) {
+    const p = pos(+pv, dep[pv]), pp = f.adj[pv];
+    for (const side of ['l', 'r']) {
+      const cv = pp[side];
+      if (cv === null) continue;
+      const q = pos(cv, dep[cv]);
+      svg.appendChild(el('line', { x1: p[0], y1: p[1], x2: q[0], y2: q[1], stroke: '#c3cfdc', 'stroke-width': 2 }));
+    }
+  }
+  // nodes (edges first so node circles cover the line ends)
+  for (const v of f.built) {
+    const d = dep[v];
+    const xy = pos(v, d);
+    const seen = f.visits[v] !== undefined;
+    const isNew = pops.has(v);
+    const isCmp = !isNew && !seen && hot[v];
+    const fill = seen || isNew ? '#1c9c57' : isCmp ? '#fff3d6' : '#eef3f9';
+    const stroke = seen || isNew ? '#137a42' : isCmp ? '#f0a83a' : '#a9bdd4';
+    const sw = seen || isNew || isCmp ? 3 : 1.8;
+    const g = el('g', {});
+    const c = el('circle', { cx: xy[0], cy: xy[1], r: 25, fill: fill, stroke: stroke, 'stroke-width': sw });
+    if (isNew) c.setAttribute('class', 'pop');
+    g.appendChild(c);
+    g.appendChild(el('text', { x: xy[0], y: xy[1] + 6, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700, fill: seen || isNew ? '#fff' : '#1c2733' }, String(v)));
+    if (seen) {
+      g.appendChild(el('circle', { cx: xy[0] + 29, cy: xy[1] - 29, r: 10, fill: '#f59e0b', stroke: '#fff', 'stroke-width': 1.6 }));
+      g.appendChild(el('text', { x: xy[0] + 29, y: xy[1] - 25, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: '#fff' }, String(f.visits[v])));
+    }
+    svg.appendChild(g);
+  }
+}
+
+function renderCode(f) {
+  const M = MODES[mode];
+  const code = codeLines(M.seq);
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = M.label + ' · insert order ' + M.seq.join(' ');
+  code.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) {
+    const rows = box.querySelectorAll('.coderow');
+    const cur = rows[f.line];
+    if (cur) box.scrollTop = Math.max(0, cur.offsetTop - box.clientHeight / 2);
+  }
+}
+
+function renderStack(f) {
+  const M = MODES[mode];
+  const box = $('#stackBox'); box.innerHTML = '';
+  if (!f.stack.length) {
+    const d = document.createElement('div');
+    d.className = 'stack-empty';
+    d.textContent = f.done ? '✅ every recursive call has returned; the stack is empty' : 'recursion stack is empty (main has not entered any function yet)';
+    box.appendChild(d);
+    return;
+  }
+  for (let i = f.stack.length - 1; i >= 0; i--) {
+    const fr = f.stack[i];
+    const row = document.createElement('div');
+    row.className = 'stack-row' + (i === f.stack.length - 1 ? ' top' : '');
+    const fn = document.createElement('span'); fn.className = 'fn';
+    fn.textContent = fr.fn;
+    const cap = document.createElement('span'); cap.className = 'cap';
+    row.appendChild(fn);
+    if (fr.kind === 'ino') {
+      // inorder frame: Left / Root / Right progress lights
+      const chips = document.createElement('span'); chips.className = 'chips';
+      ['L', 'V', 'R'].forEach((a, ai) => {
+        const c = document.createElement('span');
+        c.className = 'chip-lrv' + (ai < fr.act ? ' done' : ai === fr.act ? ' act' : '');
+        c.textContent = { L: 'L', V: 'RT', R: 'R' }[a];
+        chips.appendChild(c);
+      });
+      row.appendChild(chips);
+      cap.textContent = fr.act < 0 ? 'entry: null check' : fr.act === 0 ? 'inside left subtree' : fr.act === 1 ? 'printing root (cout)' : 'inside right subtree';
+    } else {
+      cap.textContent = fr.cap || '…';
+    }
+    row.appendChild(cap);
+    box.appendChild(row);
+  }
+}
+
+function renderAnswer(f) {
+  const wrap = $('#ansChips'); wrap.innerHTML = '';
+  const box = $('#answerBox');
+  // prefix appears once L47 cout << "Inorder insertion: " has run
+  const pre = document.createElement('span');
+  pre.className = 'alabel';
+  pre.textContent = f.prefix ? 'Inorder insertion:' : (f.done ? 'Inorder insertion:' : 'cout output (lecture green box):');
+  wrap.appendChild(pre);
+  // seven slots, filled one by one as inorder prints (value shown at the slot where it was printed)
+  for (let i = 0; i < 7; i++) {
+    const chip = document.createElement('span');
+    if (f.out.length > i) {
+      chip.className = 'seq-chip in';
+      chip.textContent = f.out[i];
+    } else if (f.phase === 'build' && !f.prefix) {
+      chip.className = 'seq-chip empty';
+      chip.textContent = '·';
+    } else {
+      chip.className = 'seq-chip empty';
+      chip.textContent = '·';
+    }
+    wrap.appendChild(chip);
+  }
+  $('#caret').className = f.caret ? '' : 'off';
+}
+
+function render() {
+  const f = frames[idx];
+  renderTree(f); renderCode(f); renderStack(f); renderAnswer(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  const M = MODES[mode];
+  $('#phaseTag').textContent = f.phase === 'build' ? 'Phase 1 · insert (building the tree)'
+    : f.phase === 'scan' ? 'Phase 2 · inorder output' : 'Done ✔';
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · ' + M.label;
+  $('#modeTag').textContent = 'insert order ' + M.seq.join(' ');
+  $('#chapter').textContent = '4. Binary Tree in Data Structure · inserting ' + M.seq.join(' ') + ' → inorder output (BST inorder is always sorted)';
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+/* ============ modes / controls ============ */
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false);
+  render();
+}
+$('#modes').addEventListener('click', e => {
+  const b = e.target.closest('.mode-pill');
+  if (b) setMode(b.dataset.mode);
+});
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => {
+  $('#speedL').textContent = speedMs() + 'ms';
+  if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); }
+});
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 600);   // autoplay on open — ready for the lecture
+</script>
+</body>
+</html>

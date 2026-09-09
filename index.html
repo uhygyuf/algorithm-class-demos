@@ -285,7 +285,7 @@ let playing = false, timer = null;
 let quiz = false;
 const $ = s => document.querySelector(s);
 
-function speedMs() { return 1650 - (+$('speed').value) * 80; }
+function speedMs() { return 1650 - (+$('#speed').value) * 80; }
 function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
 function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
 function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
