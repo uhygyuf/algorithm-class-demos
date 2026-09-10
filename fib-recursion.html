@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fibonacci Recursion — interactive call tree</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.9fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  svg#tree{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  .statbox{display:flex;flex-direction:column;gap:4px;font-family:Consolas,monospace;font-size:12.5px}
+  .stat-head{display:flex;color:var(--ink-2);font-size:11.5px;padding:2px 6px;border-bottom:1px solid var(--line)}
+  .stat-head span{flex:1}
+  .stat-row{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:6px;background:#f8fafc}
+  .stat-row b{width:40px;color:var(--blue-d);flex:none;font-size:12.5px}
+  .stat-row .bar{height:14px;border-radius:3px;background:#e9eef4;flex:1;position:relative;overflow:hidden}
+  .stat-row .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--blue)}
+  .stat-row .num{width:74px;text-align:right;color:var(--ink-2);flex:none}
+  .stat-row .res{width:64px;text-align:right;font-weight:700;color:var(--green-d);flex:none}
+  .stat-row .res.unk{color:#b9c4cf;font-weight:400}
+  .stat-total{margin-top:4px;padding:5px 6px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink)}
+  .stat-total b{color:var(--blue-d)}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.8px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:48vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .stackbox{display:flex;flex-direction:column;gap:5px;font-family:Consolas,monospace;max-height:34vh;overflow:auto}
+  .stack-row{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-left:4px solid #c9d6e4;border-radius:8px;padding:4px 10px;font-size:12.5px;background:#f8fafc}
+  .stack-row.top{border-left-color:var(--blue);background:var(--blue-pale)}
+  .stack-row .fn{font-weight:700;color:var(--blue-d);white-space:nowrap}
+  .stack-row .cap{color:var(--ink-2);font-size:11.5px;flex:1}
+  .stack-empty{color:#a8b6c4;font-size:12.5px;text-align:center;padding:10px 0;font-family:inherit}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,168,58,.5)}50%{box-shadow:0 0 0 6px rgba(240,168,58,0)}}
+  @keyframes popIn{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+  .pop{transform-box:fill-box;transform-origin:center;animation:popIn .5s ease}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures · Recursion</div>
+    <h1>Fibonacci Recursion — the recursive call tree</h1>
+    <div class="chapter" id="chapter">fib(n) = fib(n−1) + fib(n−2) · what the recursion tree looks like + repeated work vs memoization</div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="plain6">1. Plain recursion fib(6) <small>25 calls · lots of repeats</small></button>
+      <button class="mode-pill" data-mode="memo6">2. Memoized fib(6) <small>each value computed once</small></button>
+      <button class="mode-pill" data-mode="memo12">3. Memoized fib(12) <small>recursion depth 12 · only 13 values</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+      <a href="fib-recursion.html" class="on">9. Fibonacci recursion</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>🌳 The fib() recursion call tree <span class="tag" id="modeTag"></span></h3>
+        <svg id="tree" viewBox="0 0 940 620" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="legend">
+          <span><span class="dot" style="background:#eef3f9;border:1px solid #a9bdd4"></span>called, waiting for children</span>
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>computing right now</span>
+          <span><span class="dot" style="background:#1c9c57"></span>return value known (number in green)</span>
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;border:2px dashed #f0a83a;margin-right:4px;vertical-align:-2px"></span>memo hit: returns at once, no expansion (memoized mode)</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📊 How often each n is called <span class="tag" id="statTag"></span></h3>
+        <div class="statbox" id="statBox"></div>
+      </div>
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 C++ recursive implementation <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot" id="codeFoot">Yellow = current line. Every circle is one fib() call; the small text under a circle is that call's final return value.</div>
+      </div>
+      <div class="card">
+        <h3>🥞 Recursion call stack <span class="tag">the chain of calls waiting to return</span></h3>
+        <div class="stackbox" id="stackBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Fibonacci recursion visualization (teaching page)
+ * plain recursion vs memoization: compare call counts on the same fib(6)
+ * tree: circle = one fib() call; green = returned; dashed gold ring = memo hit
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const MODES = {
+  plain6: { n: 6, memo: false },
+  memo6:  { n: 6, memo: true },
+  memo12: { n: 12, memo: true }
+};
+const CODE_PLAIN = [
+  'int fib(int n) {',
+  '    if (n <= 1) return n;',
+  '    return fib(n - 1) + fib(n - 2);',
+  '}',
+  'int main() { cout << fib(6) << endl; }'
+];
+const CODE_MEMO = [
+  'int memo[100];                 // all initialized to -1',
+  'int fib(int n) {',
+  '    if (memo[n] != -1) return memo[n];',
+  '    if (n <= 1) memo[n] = n;',
+  '    else memo[n] = fib(n - 1) + fib(n - 2);',
+  '    return memo[n];',
+  '}',
+  'int main() { cout << fib(6) << endl; }'
+];
+const LN = { ifn: 1, leafRet: 1, rec: 2 };   // plain mode row indices
+const LM = { hit: 2, base: 3, rec: 4 };      // memoized mode
+
+// independent reference: count function entries per n; a memo hit still enters the function (it checks memo first)
+function naive(n, memo) {
+  const per = {}, memoV = {}; let calls = 0, hits = 0, cold = 0;
+  function go(x) {
+    calls++; per[x] = (per[x] || 0) + 1;
+    if (memo && memoV[x] !== undefined) { hits++; return memoV[x]; }
+    cold++;
+    let v;
+    if (x <= 1) v = x;
+    else v = go(x - 1) + go(x - 2);
+    if (memo) memoV[x] = v;
+    return v;
+  }
+  const ans = go(n);
+  return { calls, hits, cold, per, ans };
+}
+for (const k in MODES) MODES[k].sim = naive(MODES[k].n, MODES[k].memo);
+
+// ---- plan: build the tree of calls actually created (same order as the animation) to fix the geometry ----
+function planTree(n, memo) {
+  const list = [], byVal = {};
+  let nid = 0;
+  function build(k, depth, parent, side) {
+    if (memo && byVal[k]) return null;             // memo hit: no new node
+    const id = nid++;
+    const nd = { id, n: k, depth, parent, side, ch: [] };
+    list.push(nd); byVal[k] = nd;
+    if (k <= 1) return nd;
+    const l = build(k - 1, depth + 1, id, 'l');
+    const r = build(k - 2, depth + 1, id, 'r');
+    if (l) nd.ch.push(l); if (r) nd.ch.push(r);
+    return nd;
+  }
+  const root = build(n, 0, null, null);
+  return { list, byVal, root };
+}
+function layoutTree(plan, rowStep) {
+  // leaves get a preorder x (units); internal nodes average their children; then convert to pixels
+  let leafIdx = 0;
+  (function assign(nd) {
+    if (!nd.ch.length) { nd.ux = leafIdx++; return; }
+    nd.ch.forEach(assign);
+    nd.ux = nd.ch.reduce((a, c) => a + c.ux, 0) / nd.ch.length;
+  })(plan.root);
+  const maxD = Math.max.apply(null, plan.list.map(x => x.depth));
+  const gap = 56;
+  const contentW = Math.max(0, leafIdx - 1) * gap + 140;
+  const W = Math.max(contentW, 460);
+  const off = (W - contentW) / 2 + 70;
+  return {
+    W: W,
+    H: 70 + maxD * rowStep + 90,
+    px: nd => off + nd.ux * gap,
+    py: nd => 70 + nd.depth * rowStep
+  };
+}
+for (const k in MODES) {
+  const plan = planTree(MODES[k].n, MODES[k].memo);
+  MODES[k].plan = plan;
+}
+
+function buildFrames(modeKey) {
+  const M = MODES[modeKey], isMemo = M.memo, n = M.n;
+  const plan = M.plan;
+  const frames = [];
+  const stack = [];
+  let calls = 0, hits = 0, coldDone = 0;
+  const per = {}, results = {};
+  const memoV = {};
+  const st = {};          // node id -> {val|null}
+  const ring = {};        // highlight (computing / hit) node id -> true
+  const createdId = plan.list.map(x => x.id);
+  const createdIdxOf = {}; plan.list.forEach((x, i) => createdIdxOf[x.id] = i);
+  let curNode = null;     // the call currently executing (cold node id)
+  let hitVal = null;      // value of a memo hit (draws a dashed ring on its existing node)
+
+  function snap(msg, line, extra) {
+    frames.push(Object.assign({
+      msg, line, done: false,
+      stack: stack.map(x => Object.assign({}, x)),
+      calls: calls, hits: hits, coldDone: coldDone,
+      per: Object.assign({}, per), results: Object.assign({}, results),
+      cur: curNode, hitVal: hitVal,
+      st: Object.assign({}, st)
+    }, extra || {}));
+  }
+
+  function* compute(node) {
+    const k = node.n;
+    // entering a call (cold node: it really computes)
+    curNode = node.id; hitVal = null;
+    calls++; per[k] = (per[k] || 0) + 1; coldDone++;
+    const depthTxt = node.depth > 0 ? ' (from the ' + (node.side === 'l' ? 'left' : 'right') + ' half of fib(' + node.parent + '))' : ' (called by main)';
+    if (isMemo) {
+      stack.push({ fn: 'fib(' + k + ')', cap: 'checking memo[' + k + ']…' });
+      snap('Calling <b>fib(' + k + ')</b>' + depthTxt + ' → first check <b>memo[' + k + ']</b>: ' + (memoV[k] !== undefined ? 'already stored' : 'not computed yet') + ' (entry #' + calls + ')', LM.hit, []);
+    } else {
+      stack.push({ fn: 'fib(' + k + ')', cap: '' });
+      snap('Calling <b>fib(' + k + ')</b>' + depthTxt + ' → run the first line, the n ≤ 1 check (entry #' + calls + ')', LN.ifn, []);
+    }
+    if (k <= 1) {
+      memoV[k] = k; results[k] = k; st[node.id] = { val: k };
+      const line = isMemo ? LM.base : LN.leafRet;
+      snap('fib(' + k + '): <b>n = ' + k + ' ≤ 1</b> → base case, <b>return ' + k + '</b>' + (isMemo ? ' and store memo[' + k + '] = ' + k : ''), line, []);
+      curNode = null;
+      stack.pop();
+      return k;
+    }
+    // left half: fib(k-1)
+    if (isMemo && memoV[k - 1] !== undefined) {
+      calls++; per[k - 1] = (per[k - 1] || 0) + 1; hits++; hitVal = k - 1; curNode = null;
+      snap('fib(' + k + ') calls the <b>left half fib(' + (k - 1) + ')</b> — inside, <b>memo[' + (k - 1) + '] = ' + memoV[k - 1] + '</b> is already there → return at once (entry #' + calls + ', no recursion)', LM.hit, []);
+      hitVal = null;
+      stack[stack.length - 1].cap = 'left half hit memo, take ' + memoV[k - 1];
+    } else {
+      const L = plan.byVal[k - 1];
+      snap('fib(' + k + ') first computes the <b>left half fib(' + (k - 1) + ')</b>: the first argument of fib(n−1) + fib(n−2)', isMemo ? LM.rec : LN.rec, []);
+      const lv = yield* compute(L);
+      snap('Left half fib(' + (k - 1) + ') returned <b>' + lv + '</b> → back in fib(' + k + '), now the right half', -1, []);
+      memoV[k - 1] = lv;
+      stack[stack.length - 1].cap = 'left half = ' + lv + ', waiting for right';
+    }
+    // right half: fib(k-2)
+    if (isMemo && memoV[k - 2] !== undefined) {
+      calls++; per[k - 2] = (per[k - 2] || 0) + 1; hits++; hitVal = k - 2; curNode = null;
+      snap('fib(' + k + ') calls the <b>right half fib(' + (k - 2) + ')</b> — <b>memo[' + (k - 2) + '] = ' + memoV[k - 2] + '</b> is already there → return at once (entry #' + calls + ', nothing to expand)', LM.hit, []);
+      hitVal = null;
+    } else {
+      const R = plan.byVal[k - 2];
+      snap('fib(' + k + ') computes the <b>right half fib(' + (k - 2) + ')</b>: the second argument', isMemo ? LM.rec : LN.rec, []);
+      const rv = yield* compute(R);
+      snap('Right half fib(' + (k - 2) + ') returned <b>' + rv + '</b>', -1, []);
+      memoV[k - 2] = rv;
+    }
+    const Lv = memoV[k - 1], Rv = memoV[k - 2], val = Lv + Rv;
+    memoV[k] = val; results[k] = val; st[node.id] = { val: val };
+    snap('fib(' + k + ') has both child results: <b>' + Lv + ' + ' + Rv + ' = ' + val + '</b> → return ' + val + (isMemo ? ' and store memo[' + k + '] = ' + val : ''), isMemo ? LM.rec : LN.rec, []);
+    curNode = null;
+    stack.pop();
+    return val;
+  }
+
+  function* run() {
+    const N = MODES[modeKey];
+    const rowStep = N.n >= 10 ? 50 : (N.n >= 8 ? 80 : 100);
+    const geo = layoutTree(plan, rowStep);
+    MODES[modeKey].geo = geo;
+    const kind = isMemo ? 'memoized version' : 'plain version';
+    const desc = isMemo
+      ? 'Fibonacci recurrence: fib(n) = fib(n−1) + fib(n−2), fib(0)=0, fib(1)=1.<br><b>Memoized</b>: keep a memo table; once an n is computed it is stored, so the next time we just read it → each value is computed only once.'
+      : 'Fibonacci recurrence: fib(n) = fib(n−1) + fib(n−2), fib(0)=0, fib(1)=1.<br><b>Plain recursion</b>: every fib() really recurses all the way down → the same n is recomputed again and again (fib(3) is computed 3 times).';
+    snap('Fib(' + n + ') ' + kind + ' — ' + desc, -1, []);
+    snap('Start: main calls <b>fib(' + n + ')</b> → the recursion begins; every time a function is entered, a new circle grows on the left', -1, []);
+    yield* compute(plan.root);
+    const s = N.sim;
+    const answerMsg = '✔ main got the answer <b>fib(' + n + ') = ' + s.ans + '</b>. The whole tree is computed.';
+    frames[frames.length - 1].done = true;
+    // last frame: the summary (done)
+    const repeatTxt = isMemo
+      ? 'entered <b>' + calls + '</b> times: ' + s.cold + ' distinct values computed once each + ' + s.hits + ' memo hits'
+      : 'entered <b>' + calls + '</b> times — the same n over and over (fib(3) 3×, fib(2) 5×, …)';
+    snap('📌 Summary: ' + kind + ' — ' + repeatTxt + '<br>' + answerMsg, -1, []);
+    frames[frames.length - 1].done = true;
+  }
+  const g = run(); for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { plain6: buildFrames('plain6'), memo6: buildFrames('memo6'), memo12: buildFrames('memo12') };
+/*%%LOGIC_END%%*/
+
+let mode = 'plain6', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, a, t) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function modeCfg() { return MODES[mode]; }
+function renderTree(f) {
+  const svg = $('#tree'); svg.innerHTML = '';
+  const M = modeCfg(), plan = M.plan, geo = M.geo;
+  if (!geo) return;
+  if (svg.getAttribute('viewBox') !== '0 0 ' + geo.W + ' ' + geo.H) svg.setAttribute('viewBox', '0 0 ' + geo.W + ' ' + geo.H);
+  const doneIds = new Set(); for (const id in f.st) if (f.st[id] && f.st[id].val !== null) doneIds.add(+id);
+  const cur = f.cur;
+  // edges
+  for (const nd of plan.list) {
+    if (nd.id >= f.coldDone) break;
+    const p = geo, ax = geo.px(nd), ay = geo.py(nd);
+    for (const c of nd.ch) {
+      if (c.id >= f.coldDone) continue;
+      svg.appendChild(el('line', { x1: ax, y1: ay + 20, x2: geo.px(c), y2: geo.py(c) - 20, stroke: '#c3cfdc', 'stroke-width': 1.8 }));
+    }
+  }
+  // nodes
+  for (const nd of plan.list) {
+    if (nd.id >= f.coldDone) break;
+    const x = geo.px(nd), y = geo.py(nd);
+    const isCur = cur === nd.id;
+    const val = (f.st[nd.id] && f.st[nd.id].val !== null) ? f.st[nd.id].val : null;
+    const g = el('g', {});
+    let fill = '#eef3f9', stroke = '#a9bdd4', sw = 1.8;
+    if (val !== null) { fill = '#1c9c57'; stroke = '#137a42'; sw = 2.4; }
+    else if (isCur) { fill = '#fff3d6'; stroke = '#f0a83a'; sw = 2.8; }
+    const c = el('circle', { cx: x, cy: y, r: 21, fill: fill, stroke: stroke, 'stroke-width': sw });
+    if (isCur) c.setAttribute('class', 'ring');
+    g.appendChild(c);
+    g.appendChild(el('text', { x: x, y: y + 6, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700, fill: val !== null ? '#fff' : '#1c2733' }, String(nd.n)));
+    if (val !== null) {
+      g.appendChild(el('text', { x: x, y: y + 34, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: '#137a42' }, '= ' + val));
+    }
+    svg.appendChild(g);
+  }
+  // memo hit: draw a dashed gold ring on the existing node with the same value
+  if (f.hitVal !== null) {
+    const nd = plan.byVal[f.hitVal];
+    if (nd && nd.id < f.coldDone) {
+      const x = geo.px(nd), y = geo.py(nd);
+      const ringC = el('circle', { cx: x, cy: y, r: 27, fill: 'none', stroke: '#f0a83a', 'stroke-width': 2.4, 'stroke-dasharray': '5 4' });
+      ringC.setAttribute('class', 'ring');
+      svg.appendChild(ringC);
+    }
+  }
+}
+
+function renderCode(f) {
+  const M = modeCfg();
+  const code = M.memo ? CODE_MEMO : CODE_PLAIN;
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = M.memo ? 'fib(n) + memo[] · memoized' : 'fib(n) · plain recursion';
+  code.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) {
+    const rows = box.querySelectorAll('.coderow');
+    const cur = rows[f.line];
+    if (cur) box.scrollTop = Math.max(0, cur.offsetTop - box.clientHeight / 2);
+  }
+}
+
+function renderStack(f) {
+  const box = $('#stackBox'); box.innerHTML = '';
+  if (!f.stack.length) {
+    const d = document.createElement('div');
+    d.className = 'stack-empty';
+    d.textContent = f.done ? '✅ every recursive call has returned' : 'the stack is empty (main has not called fib yet)';
+    box.appendChild(d);
+    return;
+  }
+  for (let i = f.stack.length - 1; i >= 0; i--) {
+    const fr = f.stack[i];
+    const row = document.createElement('div');
+    row.className = 'stack-row' + (i === f.stack.length - 1 ? ' top' : '');
+    const fn = document.createElement('span'); fn.className = 'fn';
+    fn.textContent = fr.fn;
+    const cap = document.createElement('span'); cap.className = 'cap';
+    cap.textContent = fr.cap || 'waiting for children…';
+    row.appendChild(fn); row.appendChild(cap);
+    box.appendChild(row);
+  }
+}
+
+function renderStats(f) {
+  const M = modeCfg(), box = $('#statBox'); box.innerHTML = '';
+  $('#statTag').textContent = 'fib(' + M.n + ') · ' + f.calls + ' call(s)' + (M.memo ? ' · ' + f.hits + ' memo hits' : '');
+  const head = document.createElement('div'); head.className = 'stat-head';
+  head.innerHTML = '<span>n</span><span style="flex:2"></span><span class="res">value</span>';
+  box.appendChild(head);
+  const maxc = Math.max(1, ...Object.values(f.per));
+  for (let k = 0; k <= M.n; k++) {
+    const row = document.createElement('div'); row.className = 'stat-row';
+    const b = document.createElement('b'); b.textContent = 'fib(' + k + ')';
+    const bar = document.createElement('span'); bar.className = 'bar';
+    const fill = document.createElement('i');
+    fill.style.width = Math.round((f.per[k] || 0) / maxc * 100) + '%';
+    bar.appendChild(fill);
+    const num = document.createElement('span'); num.className = 'num';
+    num.textContent = '×' + (f.per[k] || 0);
+    const res = document.createElement('span'); res.className = 'res' + (f.results[k] === undefined ? ' unk' : '');
+    res.textContent = f.results[k] !== undefined ? '= ' + f.results[k] : '…';
+    row.appendChild(b); row.appendChild(bar); row.appendChild(num); row.appendChild(res);
+    box.appendChild(row);
+  }
+  const total = document.createElement('div'); total.className = 'stat-total';
+  total.innerHTML = 'total calls: <b>' + f.calls + '</b>' +
+    (M.memo ? ' (' + (M.n + 1) + ' distinct n values, each computed once; the rest are memo hits)' : ' (the same n repeats — exponential waste)') +
+    ' · result fib(' + M.n + ') = <b>' + (f.results[M.n] !== undefined ? f.results[M.n] : '?') + '</b>';
+  box.appendChild(total);
+}
+
+function render() {
+  const f = frames[idx];
+  renderTree(f); renderCode(f); renderStack(f); renderStats(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  const M = modeCfg();
+  $('#phaseTag').textContent = M.memo ? 'memoized · ' + f.calls + ' calls' : 'plain recursion · ' + f.calls + ' calls';
+  $('#modeTag').textContent = 'fib(' + M.n + ') · ' + (M.memo ? 'memoized memo[]' : 'plain recursion');
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · ' + (M.memo ? 'memoized' : 'plain') + ' fib(' + M.n + ')';
+  $('#chapter').textContent = 'Fibonacci Recursion — fib(' + M.n + ') · ' + (M.memo ? 'memoized' : 'plain recursion');
+  $('#codeFoot').textContent = M.memo
+    ? 'Yellow = current line. memo[] stores the result of every n, so a hit returns at once and the tree never expands a repeated subtree.'
+    : 'Yellow = current line. Plain recursion has no memo → the same n is computed many times; look how many identical subtrees appear.'
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false);
+  render();
+}
+$('#modes').addEventListener('click', e => {
+  const b = e.target.closest('.mode-pill');
+  if (b) setMode(b.dataset.mode);
+});
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => {
+  $('#speedL').textContent = speedMs() + 'ms';
+  if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); }
+});
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('plain6');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>

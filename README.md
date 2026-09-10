@@ -15,7 +15,8 @@ network required. Open any file in a browser and it runs.
 | `nonrepeat-char.html` | Problem 1 — first non-repeating character | Pass 1 counts each letter into the hash table `count[26]`, pass 2 scans for the first character with `count == 1`. Animates the input chips, every `count[c-'a']++`, the scan and the verdict — examples `aabbcde → c` and `aabbcc → None`. |
 | `reconstruct-tree.html` | Problem 2 — reconstruct a binary tree | Rebuilds the tree from `pre-order A B D E C F` and `in-order D B E A F C`: pre/in rows with the current recursive range highlighted, a live `build(pre part / in part)` call stack, ROOT/leaf labelling, and a post-order run that fills the green box with `D E B F C A`. |
 | `bst-insert.html` | Problem 3 — BST insertion 15/90/65 | The initial tree `52 (30(20,40), 75(60,80))` with the assignment's `InsertBST(value)` pseudocode executed line by line, recording every comparison: 15 → left child of 20, 90 → right child of 80, 65 → right child of 60. |
-| `hanoi.html` | Problem 4 — Tower of Hanoi | Animates the three rods and disks while the recursive `hanoi()` runs (call stack + cout terminal). `n = 3` reproduces the assignment's example output verbatim; `n = 2` and `n = 4` are one click away. |
+| `hanoi.html` | Problem 4 — Tower of Hanoi | Animates the three rods and disks while the recursive `hanoi()` runs (call stack + cout terminal). `n = 3` reproduces the assignment's example output verbatim; `n = 2`, `n = 4` and `n = 5` are one click away. |
+| `fib-recursion.html` | Bonus — Fibonacci recursion | Grows the `fib()` call tree frame by frame. Plain recursion on fib(6) enters the function 25 times (same subtrees repeated); the memoized version stores `memo[n]` so each value is computed once (11 entries: 7 cold + 4 memo hits) and repeated subtrees are never expanded. fib(12) shows how memoization keeps calls linear (`23`) despite recursion depth 12. A per-`n` call-count bar chart updates live. |
 
 Sample data matches the lecture slides: the complete binary tree 1–7, the
 15→25→35… probing sequence, the apple/banana/orange map, and the BST built from
@@ -48,6 +49,7 @@ nonrepeat-char.html         assignment P1: first non-repeating character via cou
 reconstruct-tree.html       assignment P2: rebuild tree from pre-order + in-order
 bst-insert.html             assignment P3: BST insert 15/90/65 (walk comparisons)
 hanoi.html                  assignment P4: Tower of Hanoi recursion
+fib-recursion.html          bonus: fib() call tree — plain vs memoized
 ```
 
 A Chinese-language edition of these demos exists separately for classroom use.
