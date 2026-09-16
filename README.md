@@ -18,6 +18,7 @@ network required. Open any file in a browser and it runs.
 | `hanoi.html` | Problem 4 — Tower of Hanoi | Animates the three rods and disks while the recursive `hanoi()` runs (call stack + cout terminal). `n = 3` reproduces the assignment's example output verbatim; `n = 2`, `n = 4` and `n = 5` are one click away. |
 | `fib-recursion.html` | Bonus — Fibonacci recursion | Grows the `fib()` call tree frame by frame. Plain recursion on fib(6) enters the function 25 times (same subtrees repeated); the memoized version stores `memo[n]` so each value is computed once (11 entries: 7 cold + 4 memo hits) and repeated subtrees are never expanded. fib(12) shows how memoization keeps calls linear (`23`) despite recursion depth 12. A per-`n` call-count bar chart updates live. |
 | `stack-reverse.html` | Exercise — reverse a string with a stack | The slide exercise (Input `Hello` → Output `olleH`): every character is pushed onto a stack (boxes grow bottom-up, top highlighted), then popped one by one and appended to a new string, and finally printed. The slide's four "What You Should Do" steps light up as they execute; presets also cover `Stack` → `kcatS` and the palindrome `level`. |
+| `queue-reverse-k.html` | Exercise — reverse the first K elements of a queue | The slide exercise: queue `10 20 25 40 50`, `K = 3` → `25 20 10 40 50`. Watch the first K leave the front and pile onto a stack (LIFO — order flipped), pop back into the rear, then the remaining N−K rotate front→rear (FIFO — order kept), and finally every element is printed. The slide's Goal/Hints become three steps that light up as they run; presets cover `1 2 3 4 5 6, K = 4` and the full reversal `7 8 9, K = 3`. |
 
 Sample data matches the lecture slides: the complete binary tree 1–7, the
 15→25→35… probing sequence, the apple/banana/orange map, and the BST built from
@@ -52,6 +53,7 @@ bst-insert.html             assignment P3: BST insert 15/90/65 (walk comparisons
 hanoi.html                  assignment P4: Tower of Hanoi recursion
 fib-recursion.html          bonus: fib() call tree — plain vs memoized
 stack-reverse.html          exercise: reverse a string with a stack
+queue-reverse-k.html        exercise: reverse first K elements of a queue
 ```
 
 A Chinese-language edition of these demos exists separately for classroom use.
