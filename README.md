@@ -1,7 +1,9 @@
 # Data Structures — Classroom Demos (English)
 
-Interactive, step-by-step visualizations that accompany the **UESTC Data Structures
-course (C++)** lectures. Pure HTML/CSS/JS — no build step, no dependencies, no
+**Live: <https://uhygyuf.github.io/algorithm-class-demos/>**
+
+Interactive, step-by-step visualizations that accompany a university **Data Structures
+course (C++)**. Pure HTML/CSS/JS — no build step, no dependencies, no
 network required. Open any file in a browser and it runs.
 
 ## Demos
