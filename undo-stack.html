@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack — Undo Feature in Text Editors · Use Case 1</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --red:#d64545; --red-pale:#fdeaea;
+    --violet:#8e44ad; --violet-pale:#f3e8fa;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header .series{display:inline-block;background:rgba(255,255,255,.18);border-radius:4px;padding:1px 7px;font-size:10.5px;letter-spacing:.6px;margin-bottom:3px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.95fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  /* editor window */
+  .editor{border:1px solid #c9d6e4;border-radius:10px;overflow:hidden;background:#fff}
+  .ebar{display:flex;align-items:center;gap:7px;background:#eef3f9;padding:6px 10px;border-bottom:1px solid #dde5ee}
+  .ebar .dot{width:10px;height:10px;border-radius:50%}
+  .ebar .title{font-size:11.5px;color:var(--ink-2);font-family:Consolas,monospace;margin-left:4px}
+  .ebar .undo{margin-left:auto;font-size:12px;font-weight:600;border:1.5px solid var(--blue);color:var(--blue);background:#fff;border-radius:7px;padding:3px 12px;font-family:inherit}
+  .ebar .undo.press{background:var(--blue);color:#fff;box-shadow:0 0 0 4px rgba(15,93,168,.18)}
+  .ebar .undo.dead{border-color:#c9d6e4;color:#b9c4cf;background:#f7fafc}
+  .textarea{padding:14px 16px;min-height:74px;background:#fffdf7;font-family:Consolas,monospace;font-size:19px;display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+  .tch{display:inline-block;min-width:13px;text-align:center;padding:3px 1px;border-radius:4px}
+  .tch.n{color:var(--ink)}
+  .tch.new{background:var(--amber-pale);color:#92400e;font-weight:700;outline:1.5px solid var(--amber)}
+  .tch.gone{background:#eef1f4;color:#aab6c2;text-decoration:line-through}
+  .tch.restored{background:var(--green-pale);color:var(--green-d);font-weight:700;outline:1.5px solid var(--green)}
+  .tch.undone{background:var(--red-pale);color:var(--red);text-decoration:line-through}
+  .caret{display:inline-block;width:2px;height:22px;background:var(--blue);animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .eempty{color:#b9c4cf;font-size:14px;font-style:italic;font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+
+  /* stack */
+  .stackwrap{display:flex;align-items:flex-end;gap:14px;min-height:150px;padding:8px 2px}
+  .stackcol{display:flex;flex-direction:column-reverse;gap:5px;flex:1}
+  .sbox{padding:7px 12px;border-radius:8px;font-size:13px;font-family:Consolas,monospace;background:var(--blue-pale);border:1.5px solid var(--blue);color:var(--blue-d);display:flex;align-items:center;gap:8px}
+  .sbox .kind{font-size:10px;background:#fff;border-radius:4px;padding:0 5px;color:var(--ink-2)}
+  .sbox.top{background:var(--amber-pale);border-color:var(--amber);color:#92400e;font-weight:700;box-shadow:0 0 0 3px rgba(240,168,58,.22)}
+  .sbox.popped{background:var(--red-pale);border-color:var(--red);color:var(--red);text-decoration:line-through;opacity:.85}
+  .sbox.ghost{background:#f4f7fa;border:1.5px dashed #c9d6e4;color:#b9c4cf;font-weight:400;font-size:12px;justify-content:center}
+  .stackside{font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px;padding-bottom:4px;min-width:132px}
+  .stackside .arrow{font-size:16px;color:var(--amber)}
+  .stackside b{color:var(--ink)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  .steplist{display:flex;flex-direction:column;gap:5px;font-size:13px}
+  .steplist .st{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:8px;background:#f8fafc;border-left:4px solid #c9d6e4}
+  .steplist .st.cur{border-left-color:var(--amber);background:var(--amber-pale)}
+  .steplist .st.done{border-left-color:var(--green);background:var(--green-pale)}
+  .steplist .st b{color:var(--blue-d)}
+  .steplist .st .no{width:18px;height:18px;flex:none;border-radius:50%;background:#e3e9f0;color:#9aa9b9;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .steplist .st.done .no{background:var(--green);color:#fff}
+  .steplist .st.cur .no{background:var(--amber);color:#fff}
+  .slidequote{font-size:12.5px;line-height:1.7;color:var(--ink);background:#f8fafc;border:1px dashed #c9d6e4;border-radius:9px;padding:8px 11px;margin-bottom:8px}
+  .slidequote .en{color:var(--ink-2);font-size:11.5px}
+  .slidequote b{color:var(--blue-d)}
+  .compare{font-size:12.5px;line-height:1.7;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--violet-pale);border-left:4px solid var(--violet)}
+  .compare b{color:#5b2c6f}
+  .compare code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.5px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:48vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc code{background:#fff;padding:0 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">University of Electronic Science and Technology of China · Data Structures · <span class="series">STACK VS. QUEUE</span></div>
+    <h1>Use Case 1: Stack — Undo Feature in Text Editors</h1>
+    <div class="chapter" id="chapter"></div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. Slide example <small>Type "Hello" → Type " World" → Delete 'o' (the o mid-string)</small></button>
+      <button class="mode-pill" data-mode="b">2. Another set <small>Type "Stack " → Type "Queue" → Delete 'e'</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+      <a href="fib-recursion.html">9. Fibonacci recursion</a>
+      <a href="stack-reverse.html">10. Reverse a string with a stack</a>
+      <a href="queue-reverse-k.html">11. Reverse the first K of a queue</a>
+      <a href="undo-stack.html" class="on">12. Stack · editor Undo</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>📝 The text editor (Notepad / Word / VS Code) <span class="tag" id="modeTag"></span></h3>
+        <div class="editor">
+          <div class="ebar">
+            <span class="dot" style="background:#f26d6d"></span><span class="dot" style="background:#f0c33a"></span><span class="dot" style="background:#66c98a"></span>
+            <span class="title">untitled.txt — Undo</span>
+            <span class="undo" id="undoBtn">↶ Undo</span>
+          </div>
+          <div class="textarea" id="editorText"></div>
+        </div>
+        <div class="legend">
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>just typed</span>
+          <span><span class="dot" style="background:#eef1f4;border:1px solid #c3ccd6"></span>about to be deleted</span>
+          <span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>restored by Undo</span>
+          <span><span class="dot" style="background:#fdeaea;border:1px solid #d64545"></span>undone (disappears again)</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📚 The action stack stack&lt;string&gt; — action history <span class="tag" id="stackTag"></span></h3>
+        <div class="stackwrap">
+          <div class="stackcol" id="stackBox"></div>
+          <div class="stackside">
+            <span class="arrow">↑</span>
+            <span><b>top = the last action</b><br>Undo only looks here</span>
+            <span style="margin-top:8px"><b>LIFO</b> last-in-first-out<br>→ undo the newest first, then older ones</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 The C++ program (STL stack) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow = current line. Every edit <b>pushes</b> a record; Undo simply <b>pops the top and reverses it</b>.</div>
+      </div>
+      <div class="card">
+        <h3>📄 The slide&rsquo;s wording &amp; key points</h3>
+        <div class="slidequote">
+          <b>Problem:</b> when a user types something and then clicks "Undo", the editor should undo the <b>last</b> action performed.<br>
+          <span class="en">In a text editor (like Notepad, Word, or VS Code), when a user types something and then clicks "Undo", the editor should undo the last action performed.</span>
+        </div>
+        <div class="slidequote">
+          <b>Why Stack?</b> Because a stack works on the <b>Last-In, First-Out (LIFO)</b> principle — the last action is always on top.<br>
+          <span class="en">Because a stack works on the Last-In, First-Out (LIFO) principle.</span>
+        </div>
+        <div class="steplist" id="stepList">
+          <div class="st" data-step="1"><span class="no">1</span><span><b>Every edit is pushed onto the stack</b> — it records what that step did</span></div>
+          <div class="st" data-step="2"><span class="no">2</span><span><b>The last action sits on top</b> — that is exactly what LIFO buys you</span></div>
+          <div class="st" data-step="3"><span class="no">3</span><span><b>Undo = pop the top + reverse it</b> — undoing a delete puts the character back</span></div>
+          <div class="st" data-step="4"><span class="no">4</span><span><b>Empty stack = nothing left to undo</b> — "Nothing to undo"</span></div>
+        </div>
+        <div class="compare">
+          <b>What if we used a queue?</b> A queue dequeues from the <b>front</b>, so Undo would first revert the <b>oldest</b> action <code>Type "Hello"</code> instead of the one just performed, <code>Delete 'o'</code> — completely wrong. That is why Undo needs a <b>stack</b>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Use Case 1: Stack — Undo Feature in Text Editors (slides: STACK VS. QUEUE)
+ * slide example: Type "Hello" → Type " World" → Delete 'o' → Undo pops the top
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const MODES = {
+  a: { ops: [{ t: 'type', s: 'Hello' }, { t: 'type', s: ' World' }, { t: 'del', ch: 'o' }] },
+  b: { ops: [{ t: 'type', s: 'Stack ' }, { t: 'type', s: 'Queue' }, { t: 'del', ch: 'e' }] }
+};
+const label = op => op.t === 'type' ? 'Type "' + op.s + '"' : "Delete '" + op.ch + "'";
+
+// independent reference: same semantics as the animation (push a record → Undo pops and reverses it)
+function refRun(ops) {
+  let text = '';
+  const st = [], hist = [];
+  for (const op of ops) {
+    if (op.t === 'type') { text += op.s; hist.push({ kind: 'type', s: op.s }); st.push(label(op)); }
+    else {
+      const pos = text.lastIndexOf(op.ch), ch = text[pos];
+      text = text.slice(0, pos) + text.slice(pos + 1);
+      hist.push({ kind: 'del', pos: pos, ch: ch });
+      st.push("Delete '" + ch + "'");
+    }
+  }
+  const undos = [], seq = [];
+  while (st.length) {
+    undos.push(st.pop());
+    const r = hist.pop();
+    if (r.kind === 'type') text = text.slice(0, text.length - r.s.length);
+    else text = text.slice(0, r.pos) + r.ch + text.slice(r.pos);
+    seq.push(text);
+  }
+  return { text: text, undos: undos, seq: seq };
+}
+
+function codeLines(M) {
+  const L = [
+    '#include <iostream>',
+    '#include <stack>',
+    '#include <string>',
+    'using namespace std;',
+    '',
+    'stack<string> actions;                    // action history (a stack: LIFO)',
+    'string text = "";                         // current editor content',
+    '',
+    'void type(string s) {',
+    '    text += s;',
+    '    actions.push("Type \\"" + s + "\\"");    // record the action',
+    '}',
+    '',
+    'void delAt(char c) {                      // delete the character c',
+    '    int pos = text.rfind(c);              // where it sits in the editor',
+    '    char ch = text[pos];',
+    '    text.erase(pos, 1);',
+    '    actions.push("Delete \'" + string(1, ch) + "\'");  // record the action',
+    '}',
+    '',
+    'void undo() {',
+    '    if (actions.empty()) { cout << "Nothing to undo"; return; }',
+    '    string a = actions.top(); actions.pop();   // take the last action',
+    '    // reverse it: Type -> drop that text;  Delete -> insert the character back',
+    '}',
+    '',
+    'int main() {'
+  ];
+  M.ops.forEach((op, i) => {
+    if (op.t === 'type') L.push('    type("' + op.s + '");'.padEnd(22) + '// text = "' + M.textAt[i] + '"');
+    else L.push("    delAt('" + op.ch + "');".padEnd(22) + "// delete the '" + op.ch + "' at index " + (op.pos + 1) + " → text = \"" + M.textAt[i] + '"');
+  });
+  M.undos.forEach((u, i) => L.push('    undo();'.padEnd(22) + '// ' + (i === 0 ? 'pop & undo ' : 'undo ') + u + ' → "' + M.afterUndo[i] + '"'));
+  L.push('    undo();'.padEnd(22) + '// empty stack → Nothing to undo');
+  L.push('}');
+  return L;
+}
+// precompute: text after each op / push records / undo order / text after each undo
+for (const key in MODES) {
+  const M = MODES[key];
+  let t = '';
+  M.textAt = [];
+  M.ops.forEach(op => {
+    if (op.t === 'type') t += op.s;
+    else { op.pos = t.lastIndexOf(op.ch); op.ch = t[op.pos]; t = t.slice(0, op.pos) + t.slice(op.pos + 1); }
+    M.textAt.push(t);
+  });
+  M.textAfterOps = t;
+  M.labels = M.ops.map(label);
+  M.undos = M.labels.slice().reverse();
+  const r = refRun(JSON.parse(JSON.stringify(M.ops)));
+  M.afterUndo = r.seq;
+  M.finalText = r.text;
+}
+const LN = { typeBody: 9, pushType: 10, delBody: 16, pushDel: 17, main: 26, undoTop: 22, undoTail: 23, emptyChk: 21, undoCall: 27 };
+
+function buildFrames(modeKey) {
+  const M = MODES[modeKey];
+  const frames = [];
+  const text = [];        // {c, st}
+  const st = [];          // {label, kind, cur, popped}
+  const hist = [];        // mirrors the stack, so Undo can reverse an action
+  let phase = 'problem', undoPressed = false, noUndo = false;
+  const steps = { 1: false, 2: false, 3: false, 4: false };
+
+  function snap(msg, line) {
+    frames.push({
+      msg: msg, line: line, phase: phase, done: false, undoPressed: undoPressed, noUndo: noUndo,
+      text: text.map(x => ({ c: x.c, st: x.st })),
+      st: st.map(x => ({ label: x.label, kind: x.kind, cur: !!x.cur, popped: !!x.popped })),
+      steps: Object.assign({}, steps)
+    });
+  }
+  const settle = () => { text.forEach(x => x.st = 'n'); st.forEach(x => { x.cur = false; x.popped = false; }); };
+  const str = () => text.map(x => x.c).join('');
+
+  const g = (function* () {
+    snap('<b>Problem:</b> in a text editor (Notepad / Word / VS Code) you type something, then click "Undo" — the editor should undo the <b>last action performed</b>.', -1);
+    snap('<b>Why Stack?</b> Keep the action history in a <b>stack</b>. A stack is <b>LIFO</b> — the most recent action is on top, so Undo only has to look at the top.', -1);
+
+    phase = 'edit';
+    for (let i = 0; i < M.ops.length; i++) {
+      const op = M.ops[i];
+      if (op.t === 'type') {
+        settle();
+        for (const c of op.s) text.push({ c: c, st: 'n' });
+        const li = text.length - op.s.length;
+        for (let j = li; j < text.length; j++) text[j].st = 'new';
+        snap('The user types <b>"' + op.s + '"</b> → <code>text += "' + op.s + '"</code>, editor content = <code>' + str() + '</code>', LN.typeBody);
+        hist.push({ kind: 'type', s: op.s });
+        st.push({ label: 'Type "' + op.s + '"', kind: 'type' });
+        st.forEach(x => x.cur = x === st[st.length - 1]);
+        snap('The action is <b>pushed</b> onto the stack: <code>actions.push("Type \\"' + op.s + '\\"")</code> — recorded so it can be undone later. Top = <b>Type "' + op.s + '"</b>', LN.pushType);
+      } else {
+        settle();
+        text[op.pos].st = 'gone';
+        const before = str();
+        snap('The user deletes character <b>#' + (op.pos + 1) + '</b>, the <b>"' + op.ch + '"</b>: <code>text.erase(pos, 1)</code> — <code>' + before + '</code> → <code>' + before.slice(0, op.pos) + before.slice(op.pos + 1) + '</code>', LN.delBody);
+        text.splice(op.pos, 1);
+        settle();
+        hist.push({ kind: 'del', pos: op.pos, ch: op.ch });
+        st.push({ label: "Delete '" + op.ch + "'", kind: 'del' });
+        st.forEach(x => x.cur = x === st[st.length - 1]);
+        snap('Another record is pushed: <code>actions.push("Delete \'' + op.ch + '\'")</code>. Top = <b>Delete \'' + op.ch + '\'</b>', LN.pushDel);
+      }
+      steps[1] = true;
+    }
+    steps[2] = true;
+    st.forEach(x => x.cur = x === st[st.length - 1]);
+    snap('The ' + M.ops.length + ' actions went into the stack in time order: bottom <b>' + M.labels[0] + '</b> → … → top <b>' + M.labels[M.labels.length - 1] + '</b> (the most recent).<br>📌 <b>The top is always the last action</b> — that is what LIFO is for.', -1);
+
+    phase = 'undo';
+    for (let j = 0; j < M.undos.length; j++) {
+      const u = M.undos[j];
+      settle();
+      undoPressed = true;
+      st[st.length - 1].popped = true;
+      snap('Click <b>↶ Undo</b> → <code>string a = actions.top(); actions.pop();</code> — pop the top action: <b>' + u + '</b>', LN.undoTop);
+      st.pop();
+      settle();
+      undoPressed = false;
+      const rec = hist.pop();
+      if (rec.kind === 'type') {
+        const n = rec.s.length, li = text.length - n;
+        for (let k = li; k < text.length; k++) text[k].st = 'undone';
+        const removed = text.slice(li).map(x => x.c).join('');
+        snap('Reverse <b>' + u + '</b>: it was a typing action, so those ' + n + ' characters <b>"' + removed + '"</b> must be removed (the underlined span)', LN.undoTail);
+        text.splice(li, n);
+        text.forEach(x => x.st = 'n');
+        snap('After removing them the editor = <code>' + (str() || '(empty)') + '</code>' + (text.length ? '' : ' — everything is undone'), LN.undoTail);
+      } else {
+        text.splice(rec.pos, 0, { c: rec.ch, st: 'restored' });
+        snap('Reverse <b>' + u + '</b>: it was a delete, so undoing means <b>inserting the character back</b> (green) → editor = <code>' + str() + '</code>', LN.undoTail);
+      }
+      if (j === 0) steps[3] = true;
+    }
+
+    phase = 'empty';
+    settle();
+    undoPressed = true;
+    snap('Click <b>↶ Undo</b> once more: <code>if (actions.empty())</code> — the stack is empty, there is no earlier action left to undo.', LN.emptyChk);
+    undoPressed = false;
+    noUndo = true;
+    steps[4] = true;
+    snap('It prints <b>"Nothing to undo"</b> (the button goes grey). The editor stays <code>' + (str() || '(empty)') + '</code> — everything has been undone.', -1);
+
+    phase = 'done';
+    settle();
+    snap('✔ <b>Conclusion:</b> the actions ' + M.labels.join(' → ') + ' were pushed onto the stack one by one; every Undo <b>pops the top and reverses it</b>, so the undo order is <b>' + M.undos.join(' → ') + '</b> — from the most recent backwards.<br>📌 That is why Undo needs a <b>stack</b>: LIFO keeps the most recent action on top.', -1);
+    frames[frames.length - 1].done = true;
+  })();
+  for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { a: buildFrames('a'), b: buildFrames('b') };
+/*%%LOGIC_END%%*/
+
+let mode = 'a', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+function renderEditor(f) {
+  const box = $('#editorText'); box.innerHTML = '';
+  if (!f.text.length) {
+    const e = document.createElement('span');
+    e.className = 'eempty';
+    e.textContent = '(empty document — nothing here yet)';
+    box.appendChild(e);
+  }
+  f.text.forEach(x => {
+    const s = document.createElement('span');
+    s.className = 'tch ' + x.st;
+    s.textContent = x.c;
+    box.appendChild(s);
+  });
+  const car = document.createElement('span'); car.className = 'caret';
+  box.appendChild(car);
+  const btn = $('#undoBtn');
+  btn.className = 'undo' + (f.noUndo ? ' dead' : f.undoPressed ? ' press' : '');
+}
+
+function renderStack(f) {
+  const box = $('#stackBox'); box.innerHTML = '';
+  $('#stackTag').textContent = f.st.length ? f.st.length + ' action(s) · top = the last action' : 'empty stack';
+  if (!f.st.length) {
+    const g = document.createElement('div');
+    g.className = 'sbox ghost';
+    g.textContent = 'empty — nothing left to undo';
+    box.appendChild(g);
+    return;
+  }
+  f.st.forEach((x, i) => {
+    const d = document.createElement('div');
+    d.className = 'sbox' + (i === f.st.length - 1 && !x.popped ? ' top' : '') + (x.popped ? ' popped' : '');
+    const k = document.createElement('span'); k.className = 'kind';
+    k.textContent = x.kind === 'type' ? 'type' : 'del';
+    d.appendChild(k);
+    d.appendChild(document.createTextNode(x.label));
+    box.appendChild(d);
+  });
+}
+
+function renderSteps(f) {
+  document.querySelectorAll('#stepList .st').forEach(el => {
+    const k = el.dataset.step;
+    const cur = (k === '1' && f.phase === 'edit') || (k === '2' && f.phase === 'edit' && f.st.length) ||
+                (k === '3' && f.phase === 'undo') || (k === '4' && f.phase === 'empty');
+    el.className = 'st' + (f.steps[k] ? ' done' : (cur ? ' cur' : ''));
+  });
+}
+
+function renderCode(f) {
+  const M = MODES[mode];
+  const code = codeLines(M);
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = M.ops.map(label).join(' · ');
+  code.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) {
+    const rows = box.querySelectorAll('.coderow');
+    if (rows[f.line]) box.scrollTop = Math.max(0, rows[f.line].offsetTop - box.clientHeight / 2);
+  }
+}
+
+function render() {
+  const f = frames[idx];
+  renderEditor(f); renderStack(f); renderSteps(f); renderCode(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  const M = MODES[mode];
+  $('#phaseTag').textContent = f.phase === 'problem' ? 'problem & why a stack' : f.phase === 'edit' ? 'editing (push a record)' : f.phase === 'undo' ? 'Undo (pop & reverse)' : f.phase === 'empty' ? 'empty stack' : 'conclusion ✔';
+  $('#modeTag').textContent = M.ops.map(label).join(' → ');
+  $('#chapter').textContent = 'Problem / Why Stack? (LIFO) / Example: ' + M.ops.map(label).join(' → ') + ' / Undo';
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · stack ' + f.st.length + ' · text ' + f.text.length + ' chars';
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false); render();
+}
+$('#modes').addEventListener('click', e => { const b = e.target.closest('.mode-pill'); if (b) setMode(b.dataset.mode); });
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>
