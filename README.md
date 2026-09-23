@@ -22,6 +22,7 @@ network required. Open any file in a browser and it runs.
 | `stack-reverse.html` | Exercise — reverse a string with a stack | The slide exercise (Input `Hello` → Output `olleH`): every character is pushed onto a stack (boxes grow bottom-up, top highlighted), then popped one by one and appended to a new string, and finally printed. The slide's four "What You Should Do" steps light up as they execute; presets also cover `Stack` → `kcatS` and the palindrome `level`. |
 | `queue-reverse-k.html` | Exercise — reverse the first K elements of a queue | The slide exercise: queue `10 20 25 40 50`, `K = 3` → `25 20 10 40 50`. Watch the first K leave the front and pile onto a stack (LIFO — order flipped), pop back into the rear, then the remaining N−K rotate front→rear (FIFO — order kept), and finally every element is printed. The slide's Goal/Hints become three steps that light up as they run; presets cover `1 2 3 4 5 6, K = 4` and the full reversal `7 8 9, K = 3`. |
 | `undo-stack.html` | Use Case 1 — Stack: Undo in text editors | The `STACK VS. QUEUE` slide: `Type "Hello"` → `Type " World"` → `Delete 'o'` (the o mid-string) are all pushed onto the action stack. Each Undo pops the top action and reverses it — a deleted character is inserted back, a typed run is removed — taking the document `Hello Wrld` → `Hello World` → `Hello` → empty, and finally printing `Nothing to undo`. The slide's Problem / Why Stack? wording and a note explaining why a queue would undo the *oldest* action instead are included. |
+| `palindrome-stack.html` | Question 1 — Stack application: palindrome checker | The week-4 exercise: `isPalindrome("radar")` → `true`, `isPalindrome("hello")` → `false` (plus `"level"`). Every character is pushed (boxes grow bottom-up), popped one at a time into a reversed string, and then compared with the original character by character — the comparison stops at the first difference, so `hello` needs a single pair to answer `false`. The slide's Problem / Hint wording is quoted and a closing note shows the faster "push only the first half" variant. |
 
 Sample data matches the lecture slides: the complete binary tree 1–7, the
 15→25→35… probing sequence, the apple/banana/orange map, and the BST built from
@@ -58,6 +59,7 @@ fib-recursion.html          bonus: fib() call tree — plain vs memoized
 stack-reverse.html          exercise: reverse a string with a stack
 queue-reverse-k.html        exercise: reverse first K elements of a queue
 undo-stack.html             use case 1: stack — Undo in text editors
+palindrome-stack.html       question 1: stack — palindrome checker
 ```
 
 A Chinese-language edition of these demos exists separately for classroom use.
