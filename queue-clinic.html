@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queue Application — Clinic Waiting Line Simulator · Question 2</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --red:#d64545; --red-pale:#fdeaea;
+    --violet:#8e44ad; --violet-pale:#f3e8fa;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.95fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  .cmdbar{display:flex;align-items:center;gap:8px;background:#0f1b28;border-radius:9px;padding:7px 12px;font-family:Consolas,monospace;font-size:14px;color:#d7e3f0;min-height:38px}
+  .cmdbar .prompt{color:#66c98a}
+  .cmdbar .cmd{color:#fff;font-weight:600}
+  .cmdbar.idle{color:#5b7086}
+
+  .lanehead{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2);padding:0 2px}
+  .wordbox{display:flex;gap:6px;flex-wrap:wrap;padding:6px 2px;align-items:center;min-height:56px}
+  .wch{min-width:64px;text-align:center;padding:8px 10px;border-radius:8px;font-size:16px;font-weight:700;background:#eef3f9;border:1.5px solid #a9bdd4;color:var(--ink);font-family:Consolas,monospace;position:relative}
+  .wch .ix{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:9px;color:#9aa9b9;font-weight:400}
+  .wch.front{background:var(--blue-pale);border-color:var(--blue);color:var(--blue-d);box-shadow:0 0 0 3px rgba(15,93,168,.12)}
+  .wch.new{background:var(--amber-pale);border-color:var(--amber);color:#92400e;animation:pulse 1s infinite}
+  .wch.called{background:var(--green-pale);border-color:var(--green);color:var(--green-d)}
+  .wch.peek{background:var(--violet-pale);border-color:var(--violet);color:#5b2c6f;animation:pulse 1s infinite}
+  .arrowgap{color:#c3ccd6;font-size:14px}
+  .emptyq{color:#b9c4cf;font-size:13px;font-family:Consolas,monospace;font-style:italic}
+
+  .term{background:#0f1b28;border-radius:10px;padding:8px 12px;font-family:Consolas,monospace;font-size:12.5px;color:#c8e6c9;min-height:132px;max-height:210px;overflow:auto}
+  .term .tl{white-space:pre-wrap;line-height:1.6}
+  .term .tl.alert{color:#f0a83a}
+  .term .tl.echo{color:#7f93a8}
+  .term .tl .caret2{display:inline-block;width:7px;height:13px;background:#c8e6c9;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,168,58,.45)}50%{box-shadow:0 0 0 6px rgba(240,168,58,0)}}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  .steplist{display:flex;flex-direction:column;gap:5px;font-size:13px}
+  .steplist .st{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:8px;background:#f8fafc;border-left:4px solid #c9d6e4}
+  .steplist .st.cur{border-left-color:var(--amber);background:var(--amber-pale)}
+  .steplist .st.done{border-left-color:var(--green);background:var(--green-pale)}
+  .steplist .st b{color:var(--blue-d)}
+  .steplist .st .no{width:18px;height:18px;flex:none;border-radius:50%;background:#e3e9f0;color:#9aa9b9;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .steplist .st.done .no{background:var(--green);color:#fff}
+  .steplist .st.cur .no{background:var(--amber);color:#fff}
+  .slidequote{font-size:12.5px;line-height:1.7;color:var(--ink);background:#f8fafc;border:1px dashed #c9d6e4;border-radius:9px;padding:8px 11px;margin-bottom:8px}
+  .slidequote .en{color:var(--ink-2);font-size:11.5px}
+  .slidequote b{color:var(--blue-d)}
+  .slidequote code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+  .cmdtab{font-size:12.5px;border-collapse:collapse;width:100%;margin-top:2px}
+  .cmdtab th,.cmdtab td{border:1px solid var(--line);padding:4px 7px;text-align:left}
+  .cmdtab th{background:#f8fafc;color:var(--ink-2);font-weight:600}
+  .cmdtab code{font-family:Consolas,monospace;background:var(--blue-pale);color:var(--blue-d);padding:0 4px;border-radius:4px}
+  .idea{font-size:12.5px;line-height:1.75;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--violet-pale);border-left:4px solid var(--violet)}
+  .idea b{color:#5b2c6f}
+  .idea code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.5px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:52vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc code{background:#fff;padding:0 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">Data Structures · Queue</div>
+    <h1>Question 2: Queue Application — Clinic Waiting Line Simulator</h1>
+    <div class="chapter" id="chapter"></div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. One of each action <small>ARRIVE → SHOW → CALL → CALL on an empty queue</small></button>
+      <button class="mode-pill" data-mode="b">2. A busy stretch <small>3 arrive → call → another arrives → peek</small></button>
+      <button class="mode-pill" data-mode="c">3. Empty first <small>CALL / SHOW with nobody waiting</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+      <a href="fib-recursion.html">9. Fibonacci recursion</a>
+      <a href="stack-reverse.html">10. Reverse a string with a stack</a>
+      <a href="queue-reverse-k.html">11. Reverse the first K of a queue</a>
+      <a href="undo-stack.html">12. Stack · editor Undo</a>
+      <a href="palindrome-stack.html">13. Stack · palindrome checker</a>
+      <a href="queue-clinic.html" class="on">14. Queue · clinic line</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>⌨️ The command being read (cin) <span class="tag" id="modeTag"></span></h3>
+        <div class="cmdbar" id="cmdBar"><span class="prompt">&gt;</span><span class="cmd" id="cmdText">(waiting for input)</span></div>
+        <div class="code-foot" id="cmdHint">The program reads commands one at a time with <code>while (cin &gt;&gt; cmd)</code>, handling each as it arrives.</div>
+      </div>
+
+      <div class="card">
+        <h3>🚶 The waiting queue queue&lt;string&gt; <span class="tag" id="queueTag"></span></h3>
+        <div class="lanehead"><span>← front (the next patient to be called)</span><span>rear (new arrivals line up here) →</span></div>
+        <div class="wordbox" id="qRow"></div>
+        <div class="legend">
+          <span><span class="dot" style="background:#e2eefa;border:1px solid #0f5da8"></span>front (FIFO: first in, first seen)</span>
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>just arrived (ARRIVE)</span>
+          <span><span class="dot" style="background:#f3e8fa;border:1px solid #8e44ad"></span>being peeked at (SHOW)</span>
+          <span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>called in (CALL)</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🖥️ Console output (cout) <span class="tag" id="termTag"></span></h3>
+        <div class="term" id="term"></div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 The C++ program (std::queue&lt;string&gt;) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow = current line. <b>ARRIVE</b> = <code>push</code> (enqueue); <b>CALL</b> = read <code>front()</code> then <code>pop()</code> (dequeue); <b>SHOW</b> = read <code>front()</code> only — the queue is untouched.</div>
+      </div>
+      <div class="card">
+        <h3>📄 The question&rsquo;s wording &amp; key points</h3>
+        <div class="slidequote">
+          <b>Problem Description:</b> simulate a simple clinic waiting system with <code>std::queue&lt;std::string&gt;</code>. The program processes three kinds of actions:<br>
+          <b>1. ARRIVE &lt;name&gt;</b> — a patient enters the queue (enqueue)<br>
+          <b>2. CALL</b> — the doctor calls the patient at the front (dequeue) and prints their name; if the queue is empty, print "No patients waiting"<br>
+          <b>3. SHOW</b> — print the name of the patient currently next in line without removing them (front / peek)
+        </div>
+        <div class="steplist" id="stepList">
+          <div class="st" data-step="1"><span class="no">1</span><span><b>ARRIVE = enqueue (push)</b> — the new patient joins the rear</span></div>
+          <div class="st" data-step="2"><span class="no">2</span><span><b>CALL = dequeue (pop)</b> — always the front; an empty queue must be reported</span></div>
+          <div class="st" data-step="3"><span class="no">3</span><span><b>SHOW = peek, never dequeue</b> — the queue is completely unchanged</span></div>
+        </div>
+        <table class="cmdtab">
+          <tr><th>Command</th><th>Queue operation</th><th>Output</th></tr>
+          <tr><td><code>ARRIVE Alice</code></td><td>push(Alice) at the rear</td><td>Alice joined the queue</td></tr>
+          <tr><td><code>CALL</code></td><td>front() then pop()</td><td>Now serving: Alice</td></tr>
+          <tr><td><code>CALL</code> (empty)</td><td>does nothing</td><td>No patients waiting</td></tr>
+          <tr><td><code>SHOW</code></td><td>reads front() only</td><td>Next in line: Bob</td></tr>
+        </table>
+        <div class="idea">
+          <b>Why a queue?</b> A clinic is <b>first come, first served</b> — that is exactly <b>FIFO</b>: enqueue at the <b>rear</b>, dequeue at the <b>front</b>. With a stack (LIFO) the last patient to arrive would be called first, which would scramble the order.<br>
+          <b>Complexity:</b> push / pop / front are all <code>O(1)</code>, so the whole simulation is O(number of commands).<br>
+          <b>Note:</b> the slide&rsquo;s "Example Actions" list is cut off in the photo, so the three sequences here are mine — each one covers all three actions and the empty-queue message.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Question 2: Queue Application — Clinic Waiting Line Simulator
+ * ARRIVE <name> = push / CALL = front + pop / SHOW = peek at front only
+ * empty queue: both CALL and SHOW print "No patients waiting"
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const MODES = {
+  a: [ { c: 'ARRIVE', n: 'Alice' }, { c: 'ARRIVE', n: 'Bob' }, { c: 'SHOW' }, { c: 'CALL' }, { c: 'CALL' }, { c: 'CALL' } ],
+  b: [ { c: 'ARRIVE', n: 'Tom' }, { c: 'ARRIVE', n: 'Anna' }, { c: 'ARRIVE', n: 'Leo' }, { c: 'SHOW' },
+       { c: 'CALL' }, { c: 'ARRIVE', n: 'Zoe' }, { c: 'SHOW' }, { c: 'CALL' }, { c: 'CALL' }, { c: 'CALL' } ],
+  c: [ { c: 'CALL' }, { c: 'ARRIVE', n: 'Mia' }, { c: 'SHOW' }, { c: 'CALL' }, { c: 'SHOW' }, { c: 'CALL' } ]
+};
+const cmdText = op => op.c === 'ARRIVE' ? 'ARRIVE ' + op.n : op.c;
+
+// independent reference: same semantics, producing (queue, console lines, actions) per step
+function refRun(ops) {
+  const q = [], term = [], steps = [];
+  for (const op of ops) {
+    if (op.c === 'ARRIVE') { q.push(op.n); term.push(op.n + ' joined the queue'); steps.push({ act: 'push', name: op.n }); }
+    else if (op.c === 'CALL') {
+      if (!q.length) { term.push('No patients waiting'); steps.push({ act: 'callEmpty' }); }
+      else { const who = q.shift(); term.push('Now serving: ' + who); steps.push({ act: 'pop', name: who }); }
+    } else {
+      if (!q.length) { term.push('No patients waiting'); steps.push({ act: 'showEmpty' }); }
+      else { term.push('Next in line: ' + q[0]); steps.push({ act: 'peek', name: q[0] }); }
+    }
+  }
+  return { q: q, term: term, steps: steps };
+}
+for (const key in MODES) MODES[key].ref = refRun(MODES[key]);
+
+const CODE = [
+  '#include <iostream>',
+  '#include <queue>',
+  '#include <string>',
+  'using namespace std;',
+  '',
+  'int main() {',
+  '    queue<string> waiting;            // the waiting line (FIFO: first come, first served)',
+  '    string cmd, name;',
+  '',
+  '    while (cin >> cmd) {',
+  '        if (cmd == "ARRIVE") {        // 1. a patient arrives → enqueue',
+  '            cin >> name;',
+  '            waiting.push(name);       // join the rear',
+  '            cout << name << " joined the queue\\n";',
+  '        }',
+  '        else if (cmd == "CALL") {     // 2. the doctor calls → dequeue',
+  '            if (waiting.empty())',
+  '                cout << "No patients waiting\\n";',
+  '            else {',
+  '                cout << "Now serving: " << waiting.front() << "\\n";',
+  '                waiting.pop();        // the patient leaves the queue',
+  '            }',
+  '        }',
+  '        else if (cmd == "SHOW") {     // 3. peek at the next one only',
+  '            if (waiting.empty())',
+  '                cout << "No patients waiting\\n";',
+  '            else',
+  '                cout << "Next in line: " << waiting.front() << "\\n";',
+  '        }',
+  '    }',
+  '    return 0;',
+  '}'
+];
+const LN = { while: 9, arriveIf: 10, push: 12, joinMsg: 13, callIf: 15, callEmpty: 17, callMsg: 19, pop: 20, showIf: 23, showEmpty: 25, showMsg: 27 };
+
+function buildFrames(modeKey) {
+  const OPS = MODES[modeKey];
+  const frames = [];
+  const q = [], term = [];
+  let phase = 'intro', cmdNow = null, hl = { name: null, kind: null };
+  const steps = { 1: false, 2: false, 3: false };
+
+  function snap(msg, line) {
+    frames.push({
+      msg: msg, line: line, phase: phase, done: false, cmd: cmdNow, hl: { name: hl.name, kind: hl.kind },
+      q: q.slice(), term: term.slice(), steps: Object.assign({}, steps)
+    });
+  }
+
+  const g = (function* () {
+    snap('Task: simulate a <b>clinic waiting line</b> with <code>std::queue&lt;string&gt;</code> and three commands.<br>(1) <b>ARRIVE &lt;name&gt;</b> the patient joins the queue → (2) <b>CALL</b> the doctor calls the patient at the front (they go in) → (3) <b>SHOW</b> just look at who is next, without calling them.', -1);
+    snap('A queue is <b>FIFO</b>: new arrivals join the <b>rear</b> and the patient called is always at the <b>front</b> — precisely "first come, first served". The program loops with <code>while (cin &gt;&gt; cmd)</code>, handling one command at a time.', -1);
+
+    for (let i = 0; i < OPS.length; i++) {
+      const op = OPS[i];
+      cmdNow = cmdText(op);
+      hl = { name: null, kind: null };
+      phase = 'read';
+      snap('Read the command <b>' + cmdNow + '</b> → decide which kind of action it is (if / else if)', LN.while);
+
+      if (op.c === 'ARRIVE') {
+        phase = 'arrive';
+        snap('The command is <b>ARRIVE</b>: read one more token, <code>cin &gt;&gt; name;</code> — patient <b>' + op.n + '</b> has arrived', LN.arriveIf);
+        q.push(op.n);
+        hl = { name: op.n, kind: 'new' };
+        snap('Run <code>waiting.push("' + op.n + '")</code> — ' + op.n + ' joins the <b>rear</b>, which always holds the latest arrival', LN.push);
+        term.push(op.n + ' joined the queue');
+        steps[1] = true;
+        hl = { name: null, kind: null };
+        snap('The console prints <code>cout &lt;&lt; "' + op.n + ' joined the queue"</code> → the queue is now ' + q.join(', ') + ' (' + q.length + ' patient(s))', LN.joinMsg);
+      } else if (op.c === 'CALL') {
+        phase = 'call';
+        snap('The command is <b>CALL</b>: the doctor calls the next patient — first check <code>waiting.empty()</code>', LN.callIf);
+        if (!q.length) {
+          term.push('No patients waiting');
+          hl = { name: null, kind: null };
+          snap('The queue is <b>empty</b> → take the <code>if (waiting.empty())</code> branch and print <b>"No patients waiting"</b> (nobody to call, the queue stays as it is)', LN.callEmpty);
+          steps[2] = true;
+        } else {
+          const who = q[0];
+          hl = { name: who, kind: 'front' };
+          snap('The queue is not empty → the front is <b>' + who + '</b> (arrived earliest, so seen first). Print <code>cout &lt;&lt; "Now serving: " &lt;&lt; waiting.front()</code>', LN.callMsg);
+          term.push('Now serving: ' + who);
+          q.shift();
+          hl = { name: who, kind: 'called' };
+          snap('<code>waiting.pop()</code> — ' + who + ' goes in and leaves the queue (dequeue always takes the <b>front</b>). ' + q.length + ' patient(s) left' + (q.length ? ' (' + q.join(', ') + ')' : ' (the queue is empty now)'), LN.pop);
+          steps[2] = true;
+        }
+      } else {
+        phase = 'show';
+        snap('The command is <b>SHOW</b>: just find out who is next — again check <code>waiting.empty()</code> first', LN.showIf);
+        if (!q.length) {
+          term.push('No patients waiting');
+          snap('The queue is empty → print <b>"No patients waiting"</b>. Note that <b>SHOW never changes the queue</b>, it only takes a look', LN.showEmpty);
+        } else {
+          const who = q[0];
+          hl = { name: who, kind: 'peek' };
+          snap('Run <code>cout &lt;&lt; "Next in line: " &lt;&lt; waiting.front()</code> → prints <b>Next in line: ' + who + '</b>', LN.showMsg);
+          term.push('Next in line: ' + who);
+          snap('See the difference? <code>SHOW</code> only reads <code>front()</code>, there is <b>no pop()</b> — ' + who + ' is still at the front waiting to be called (' + q.join(', ') + ')', LN.showMsg);
+        }
+        steps[3] = true;
+      }
+    }
+
+    phase = 'done';
+    cmdNow = null;
+    hl = { name: null, kind: null };
+    const calls = MODES[modeKey].ref.steps.filter(s => s.act === 'pop').length;
+    const empties = MODES[modeKey].ref.steps.filter(s => s.act === 'callEmpty' || s.act === 'showEmpty').length;
+    snap('✔ Done: ' + OPS.length + ' commands were processed — ' + MODES[modeKey].ref.steps.filter(s => s.act === 'push').length + ' arrived, ' + calls + ' were called in, and the empty-queue message appeared ' + empties + ' time(s);<br>the queue ends with ' + (q.length ? q.join(', ') : '(nobody)') + '.<br>📌 Every <code>CALL</code> takes the <b>front</b> (the earliest arrival) — that is FIFO;<br>💡 Swap the queue for a stack and the last patient to arrive would be called first, which would break the clinic&rsquo;s order.', -1);
+    frames[frames.length - 1].done = true;
+  })();
+  for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { a: buildFrames('a'), b: buildFrames('b'), c: buildFrames('c') };
+/*%%LOGIC_END%%*/
+
+let mode = 'a', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+function renderCmd(f) {
+  const bar = $('#cmdBar');
+  if (!f.cmd) {
+    bar.className = 'cmdbar idle';
+    $('#cmdText').textContent = f.done ? '(no more commands — the program ends)' : '(waiting for input)';
+  } else {
+    bar.className = 'cmdbar';
+    $('#cmdText').textContent = f.cmd;
+  }
+}
+
+function renderQueue(f) {
+  const row = $('#qRow'); row.innerHTML = '';
+  $('#queueTag').textContent = f.q.length ? f.q.length + ' waiting · next up = ' + f.q[0] : 'empty queue';
+  if (!f.q.length) {
+    const e = document.createElement('span');
+    e.className = 'emptyq';
+    e.textContent = '(nobody is waiting — waiting.empty() is true)';
+    row.appendChild(e);
+    return;
+  }
+  f.q.forEach((name, i) => {
+    if (i) { const g = document.createElement('span'); g.className = 'arrowgap'; g.textContent = '›'; row.appendChild(g); }
+    const d = document.createElement('div');
+    let cls = 'wch';
+    if (f.hl && f.hl.name === name && f.hl.kind) cls += ' ' + f.hl.kind;
+    else if (i === 0) cls += ' front';
+    d.className = cls;
+    d.innerHTML = name + (i === 0 ? '<span class="ix">front</span>' : '');
+    row.appendChild(d);
+  });
+}
+
+function renderTerm(f) {
+  const box = $('#term'); box.innerHTML = '';
+  $('#termTag').textContent = f.term.length ? f.term.length + ' line(s) printed' : 'nothing printed yet';
+  const shown = f.term.slice(-9);
+  shown.forEach((line, i) => {
+    const d = document.createElement('div');
+    d.className = 'tl' + (/No patients waiting/.test(line) ? ' alert' : '');
+    d.textContent = line;
+    box.appendChild(d);
+  });
+  const cur = document.createElement('div');
+  cur.className = 'tl';
+  cur.innerHTML = '<span class="caret2"></span>';
+  box.appendChild(cur);
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderSteps(f) {
+  document.querySelectorAll('#stepList .st').forEach(el => {
+    const k = el.dataset.step;
+    const cur = (k === '1' && f.phase === 'arrive') || (k === '2' && f.phase === 'call') || (k === '3' && f.phase === 'show');
+    el.className = 'st' + (f.steps[k] ? ' done' : (cur ? ' cur' : ''));
+  });
+}
+
+function renderCode(f) {
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = MODES[mode].length + ' commands';
+  CODE.forEach((txt, i) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === i ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = i + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) {
+    const rows = box.querySelectorAll('.coderow');
+    if (rows[f.line]) box.scrollTop = Math.max(0, rows[f.line].offsetTop - box.clientHeight / 2);
+  }
+}
+
+function render() {
+  const f = frames[idx];
+  renderCmd(f); renderQueue(f); renderTerm(f); renderSteps(f); renderCode(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  $('#phaseTag').textContent = f.phase === 'intro' ? 'task & FIFO' : f.phase === 'read' ? 'reading the command' : f.phase === 'arrive' ? 'ARRIVE · enqueue' : f.phase === 'call' ? 'CALL · dequeue' : f.phase === 'show' ? 'SHOW · peek' : 'done ✔';
+  $('#modeTag').textContent = MODES[mode].length + ' commands';
+  $('#chapter').textContent = 'ARRIVE <name> (enqueue) · CALL (dequeue + print) · SHOW (front/peek) — an empty queue prints "No patients waiting"';
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · queue ' + f.q.length + ' · ' + f.term.length + ' line(s) printed';
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false); render();
+}
+$('#modes').addEventListener('click', e => { const b = e.target.closest('.mode-pill'); if (b) setMode(b.dataset.mode); });
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>
