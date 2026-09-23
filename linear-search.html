@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exercise 1 (a) — Linear Search</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --red:#d64545; --red-pale:#fdeaea;
+    --violet:#8e44ad; --violet-pale:#f3e8fa;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header .series{display:inline-block;background:rgba(255,255,255,.18);border-radius:4px;padding:1px 7px;font-size:10.5px;letter-spacing:.6px;margin-bottom:3px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+  .grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.92fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  .cellrow{display:flex;gap:6px;flex-wrap:wrap;padding:4px 2px;align-items:flex-end}
+  .cell{min-width:52px;text-align:center}
+  .cell .ix{font-size:10.5px;color:#9aa9b9;font-family:Consolas,monospace;background:#eef3f9;border:1px solid #dde5ee;border-bottom:none;border-radius:6px 6px 0 0;padding:2px 0}
+  .cell .val{font-family:Consolas,monospace;font-size:18px;font-weight:700;padding:8px 4px;border:1.5px solid #a9bdd4;border-radius:0 0 6px 6px;background:#fff;color:var(--ink)}
+  .cell.cur .ix{background:#f0a83a;color:#fff;border-color:#f0a83a}
+  .cell.cur .val{background:var(--amber-pale);border-color:var(--amber);color:#92400e;animation:pulse 1s infinite}
+  .cell.checked .ix{background:#eef1f4;color:#b9c4cf}
+  .cell.checked .val{background:#f6f8fa;border-color:#dce3ea;color:#aab6c2}
+  .cell.found .ix{background:var(--green);color:#fff;border-color:var(--green)}
+  .cell.found .val{background:var(--green-pale);border-color:var(--green);color:var(--green-d);font-weight:700}
+  .cell .mark{font-size:11px;color:var(--amber);font-weight:700;height:14px}
+  .cell.found .mark{color:var(--green)}
+  .cell.checked .mark{color:#c3ccd6}
+  .arrowgap{color:#c3ccd6;font-size:13px;padding-bottom:14px}
+
+  .answerbox{margin-top:8px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:48px}
+  .answerbox.no{border-color:var(--red);background:var(--red-pale)}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .answerbox.no .alabel{color:var(--red)}
+  .ret{font-family:Consolas,monospace;font-size:17px;font-weight:700;color:var(--green-d)}
+  .answerbox.no .ret{color:var(--red)}
+  .ret-sub{font-size:12.5px;color:var(--ink-2)}
+
+  .logbox{max-height:190px;overflow:auto;font-family:Consolas,monospace;font-size:12.5px;background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+  .logbox .lg{line-height:1.65;color:var(--ink-2)}
+  .logbox .lg .ok{color:var(--green-d);font-weight:700}
+  .logbox .lg .no{color:var(--amber);font-weight:700}
+  .logbox .lg.cur{background:var(--amber-pale);color:#92400e;border-radius:5px;padding:0 4px}
+
+  .statrow{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:8px}
+  .statrow b{color:var(--blue-d);font-family:Consolas,monospace;font-size:14px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  .steplist{display:flex;flex-direction:column;gap:5px;font-size:13px}
+  .steplist .st{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:8px;background:#f8fafc;border-left:4px solid #c9d6e4}
+  .steplist .st.cur{border-left-color:var(--amber);background:var(--amber-pale)}
+  .steplist .st.done{border-left-color:var(--green);background:var(--green-pale)}
+  .steplist .st b{color:var(--blue-d)}
+  .steplist .st .no{width:18px;height:18px;flex:none;border-radius:50%;background:#e3e9f0;color:#9aa9b9;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .steplist .st.done .no{background:var(--green);color:#fff}
+  .steplist .st.cur .no{background:var(--amber);color:#fff}
+  .slidequote{font-size:12.5px;line-height:1.7;background:#f8fafc;border:1px dashed #c9d6e4;border-radius:9px;padding:8px 11px;margin-bottom:8px}
+  .slidequote b{color:var(--blue-d)}
+  .slidequote code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+  .idea{font-size:12.5px;line-height:1.75;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--violet-pale);border-left:4px solid var(--violet)}
+  .idea b{color:#5b2c6f}
+  .idea code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.5px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:50vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc.bad{background:var(--red-pale);border-left-color:var(--red)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc.bad b{color:var(--red)}
+  .desc code{background:#fff;padding:0 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,168,58,.5)}50%{box-shadow:0 0 0 6px rgba(240,168,58,0)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">Data Structures · Searching · <span class="series">EXERCISE 1 (a)</span></div>
+    <h1>Exercise 1 (a): Linear Search</h1>
+    <div class="chapter" id="chapter"></div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. The exercise: find 27 <small>— it sits in 4th place (index 3)</small></button>
+      <button class="mode-pill" data-mode="b">2. A value that is not there: 41 <small>— compare everything → return -1</small></button>
+      <button class="mode-pill" data-mode="c">3. The last element: 9 <small>— worst case, 8 comparisons</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+      <a href="fib-recursion.html">9. Fibonacci recursion</a>
+      <a href="stack-reverse.html">10. Reverse a string with a stack</a>
+      <a href="queue-reverse-k.html">11. Reverse the first K of a queue</a>
+      <a href="undo-stack.html">12. Stack · editor Undo</a>
+      <a href="palindrome-stack.html">13. Stack · palindrome checker</a>
+      <a href="queue-clinic.html">14. Queue · clinic line</a>
+      <a href="linear-search.html" class="on">15. Linear search</a>
+      <a href="binary-search.html">16. Binary search</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>🔎 The array DataSet[8] <span class="tag" id="modeTag"></span></h3>
+        <div class="cellrow" id="arrRow"></div>
+        <div class="legend">
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>being compared</span>
+          <span><span class="dot" style="background:#f6f8fa;border:1px solid #dce3ea"></span>already compared (not equal)</span>
+          <span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>found</span>
+          <span style="font-family:Consolas,monospace">i = current index · id = the value we look for</span>
+        </div>
+        <div class="statrow">
+          <span>looking for id = <b id="statId"></b></span>
+          <span>compared <b id="statCmp">0</b> time(s)</span>
+          <span>array length n = <b id="statN"></b></span>
+        </div>
+        <div class="answerbox" id="answerBox">
+          <span class="alabel">return</span><span class="ret" id="ret">(not finished yet)</span><span class="ret-sub" id="retSub"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🧾 Comparison log <span class="tag" id="cmpTag"></span></h3>
+        <div class="logbox" id="logBox"></div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 The algorithm (the courseware pseudocode) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow = the line being executed. <b>Linear search</b> starts at element 0 and compares one by one; it returns the index as soon as it matches, and <code>-1</code> if every element was compared without a match.</div>
+      </div>
+      <div class="card">
+        <h3>📄 The question&rsquo;s wording &amp; key points</h3>
+        <div class="slidequote">
+          <b>Exercise 1 (a):</b> Perform the following search operations and show each step clearly.<br>
+          Use <b>Linear Search</b> to find the number <b>27</b> in the array:<br>
+          <code>[10, 5, 18, 27, 32, 40, 3, 9]</code>
+        </div>
+        <div class="steplist" id="stepList">
+          <div class="st" data-step="1"><span class="no">1</span><span><b>Start at i = 0</b> — linear search can only walk from the beginning</span></div>
+          <div class="st" data-step="2"><span class="no">2</span><span><b>Compare DataSet[i] == id</b> — equal means return i (found)</span></div>
+          <div class="st" data-step="3"><span class="no">3</span><span><b>Nothing matched → return -1</b> (not found)</span></div>
+        </div>
+        <div class="idea">
+          <b>Why does it work on an unsorted array?</b> Linear search never looks at the order, it just checks element after element — so an <b>unsorted array</b> is fine (binary search is not, it needs sorted data).<br>
+          <b>Cost:</b> 1 comparison in the best case, n comparisons in the worst and average case (n = 8) → time <code>O(n)</code>, extra space <code>O(1)</code>.<br>
+          <b>The courseware example:</b> looking for 27 → compare <code>10, 5, 18, 27</code> in turn; the 4th one is equal → <code>return 3</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Exercise 1 (a): Linear Search
+ * find 27 in [10, 5, 18, 27, 32, 40, 3, 9] → return 3 (the courseware example)
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const ARR = [10, 5, 18, 27, 32, 40, 3, 9];
+const MODES = {
+  a: { target: 27 },   // the courseware example → index 3, 4 comparisons
+  b: { target: 41 },   // not present → -1, 8 comparisons
+  c: { target: 9 }     // the last element → index 7, 8 comparisons
+};
+// independent reference implementation
+function refSearch(arr, id) {
+  let compares = 0;
+  for (let i = 0; i < arr.length; i++) {
+    compares++;
+    if (arr[i] === id) return { index: i, compares: compares, found: true };
+  }
+  return { index: -1, compares: compares, found: false };
+}
+for (const key in MODES) {
+  const M = MODES[key], r = refSearch(ARR, M.target);
+  M.index = r.index; M.compares = r.compares; M.found = r.found;
+  M.verdict = r.found ? String(r.index) : '-1';
+}
+for (const key in MODES) MODES[key].ref = refSearch(ARR, MODES[key].target);
+
+const CODE = [
+  'Start',
+  '    for (int i = 0; i < numrecords; i++) {',
+  '        if (DataSet[i] == id)',
+  '            return i;          // equal → found: return the index and stop',
+  '    }',
+  '    return -1;                 // every element compared, no match → not found',
+  'End'
+];
+function codeLines(M) {
+  const L = CODE.slice();
+  L.splice(1, 0, '    // search for id = ' + M.target + ' in ' + ARR.join(', '));
+  return L;
+}
+const LN = { for: 2, if: 3, ret: 4, notFound: 6 };
+
+function buildFrames(modeKey) {
+  const M = MODES[modeKey], id = M.target, n = ARR.length;
+  const frames = [];
+  const states = ARR.map(() => 'n');       // n untouched / checked compared / cur comparing / found matched
+  let phase = 'intro', i = -1, compares = 0, ret = null, log = [];
+
+  function snap(msg, line) {
+    frames.push({
+      msg: msg, line: line, phase: phase, done: false, i: i, compares: compares, ret: ret,
+      states: states.slice(), log: log.slice()
+    });
+  }
+  const g = (function* () {
+    snap('Task: use <b>linear search</b> to find the number <b>' + id + '</b> in the array <code>[' + ARR.join(', ') + ']</code> and show every step clearly.', -1);
+    snap('The idea: start at element 0 and <b>compare one element after another</b>. Return the index as soon as one matches, and <code>-1</code> if the whole array was compared without a match.<br>Note that this array is <b>unsorted</b> — linear search does not need sorted data.', -1);
+
+    phase = 'loop';
+    let foundIdx = -1;
+    for (let k = 0; k < n; k++) {
+      i = k; compares = k + 1;
+      states[k] = 'cur';
+      snap('Comparison ' + (k + 1) + ': <code>i = ' + k + '</code> — is <code>DataSet[' + k + '] = ' + ARR[k] + '</code> equal to <code>id = ' + id + '</code>?', LN['if']);
+      if (ARR[k] === id) {
+        states[k] = 'found';
+        foundIdx = k; ret = String(k);
+        log.push({ t: 'DataSet[' + k + '] = ' + ARR[k] + ' == ' + id + '  → equal! found', kind: 'ok' });
+        snap('<b>' + ARR[k] + ' == ' + id + '</b> → <b>equal</b>: run <code>return ' + k + ';</code> and the search ends right there (the rest is never inspected)', LN.ret);
+        break;
+      } else {
+        states[k] = 'checked';
+        log.push({ t: 'DataSet[' + k + '] = ' + ARR[k] + ' != ' + id + '  → i++ continue', kind: 'no' });
+        snap('<b>' + ARR[k] + ' != ' + id + '</b> → not equal, so <code>i++</code> moves one cell right and the comparing continues (' + compares + ' comparison(s) so far)', LN['for']);
+      }
+    }
+    if (foundIdx < 0) {
+      ret = '-1';
+    } else {
+      /* found: keep the pointer on the match */
+      i = foundIdx;
+    }
+
+    phase = 'out';
+    if (foundIdx >= 0) {
+      snap('Return <b>' + foundIdx + '</b>: ' + id + ' sits at index <b>' + foundIdx + '</b> (the ' + (foundIdx + 1) + 'th element) after <b>' + compares + '</b> comparisons.', -1);
+    } else {
+      i = -1;
+      snap('The whole array was compared and no element equals ' + id + ' → run <code>return -1;</code> (not found) after <b>' + compares + '</b> comparisons.', LN.notFound);
+    }
+
+    phase = 'done';
+    const best = 1, worst = n;
+    snap('✔ Result: <b>return ' + ret + '</b> — ' + (foundIdx >= 0 ? id + ' is at index ' + foundIdx : id + ' is not in the array') + '.<br>📌 This run used <b>' + compares + '</b> comparisons (array length n = ' + n + ').<br>💡 The cost of linear search: 1 comparison in the best case, n in the worst and average case → time <b>O(n)</b>, space O(1); more elements means slower, but it <b>never needs the array to be sorted</b>.', -1);
+    frames[frames.length - 1].done = true;
+    frames[frames.length - 1].foundIdx = foundIdx;
+  })();
+  for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { a: buildFrames('a'), b: buildFrames('b'), c: buildFrames('c') };
+/*%%LOGIC_END%%*/
+
+let mode = 'a', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+function renderArr(f) {
+  const row = $('#arrRow'); row.innerHTML = '';
+  ARR.forEach((v, k) => {
+    if (k) { const g = document.createElement('span'); g.className = 'arrowgap'; g.textContent = ''; row.appendChild(g); }
+    const d = document.createElement('div');
+    d.className = 'cell ' + f.states[k];
+    const mark = f.i === k && f.phase === 'loop' ? '▲ i' : (f.states[k] === 'found' ? '✓ found' : (f.states[k] === 'checked' ? '✗' : ''));
+    d.innerHTML = '<div class="ix">' + k + '</div><div class="val">' + v + '</div><div class="mark">' + mark + '</div>';
+    row.appendChild(d);
+  });
+}
+function renderLog(f) {
+  const box = $('#logBox'); box.innerHTML = '';
+  const M = MODES[mode];
+  $('#cmpTag').textContent = f.log.length ? f.log.length + ' comparison(s)' : 'not started';
+  if (!f.log.length) {
+    const d = document.createElement('div'); d.className = 'lg'; d.textContent = '(no comparisons yet)';
+    box.appendChild(d); return;
+  }
+  f.log.forEach((r, k) => {
+    const d = document.createElement('div');
+    d.className = 'lg' + (k === f.log.length - 1 && !f.done ? ' cur' : '');
+    d.innerHTML = 'i = ' + k + ' : DataSet[' + k + '] = ' + ARR[k] + '  <span class="' + r.kind + '">' + (r.kind === 'ok' ? '== ' + M.target + ' ✔' : '≠ ' + M.target) + '</span>';
+    box.appendChild(d);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+function renderAnswer(f) {
+  const box = $('#answerBox'), ret = $('#ret'), sub = $('#retSub');
+  const M = MODES[mode];
+  $('#statId').textContent = String(M.target);
+  $('#statCmp').textContent = String(f.compares);
+  $('#statN').textContent = String(ARR.length);
+  if (f.ret === null) { ret.textContent = '(not finished yet)'; sub.textContent = 'only the full scan tells'; box.className = 'answerbox'; }
+  else {
+    ret.textContent = 'return ' + f.ret;
+    sub.textContent = f.ret === '-1' ? '(' + M.target + ' is not in the array — not found)' : '(index ' + f.ret + ' holds ' + M.target + ')';
+    box.className = 'answerbox' + (f.ret === '-1' ? ' no' : '');
+  }
+}
+function renderSteps(f) {
+  document.querySelectorAll('#stepList .st').forEach(el => {
+    const k = el.dataset.step;
+    const cur = k === '1' && f.phase === 'loop' && f.log.length <= 1;
+    const done = k === '1' ? f.phase !== 'intro' : (k === '2' ? !!f.log.some(r => r.kind === 'ok') : f.ret === '-1');
+    el.className = 'st' + (done ? ' done' : (cur ? ' cur' : ''));
+  });
+}
+function renderCode(f) {
+  const M = MODES[mode];
+  const code = codeLines(M);
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = 'DataSet[' + ARR.length + '] · id = ' + M.target;
+  code.forEach((txt, k) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === k ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = k + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) { const rows = box.querySelectorAll('.coderow'); if (rows[f.line]) box.scrollTop = Math.max(0, rows[f.line].offsetTop - box.clientHeight / 2); }
+}
+function render() {
+  const f = frames[idx];
+  renderArr(f); renderLog(f); renderAnswer(f); renderSteps(f); renderCode(f);
+  const d = $('#desc');
+  const no = f.ret === '-1';
+  d.className = 'desc' + (f.done ? (no ? ' bad' : ' done') : '');
+  d.innerHTML = f.msg;
+  const M = MODES[mode];
+  $('#phaseTag').textContent = f.phase === 'intro' ? 'task & idea' : f.phase === 'loop' ? 'comparing one by one (i = ' + (f.i >= 0 ? f.i : '-') + ')' : f.phase === 'out' ? 'returning' : 'done ✔';
+  $('#modeTag').textContent = 'find id = ' + M.target + ' · result ' + (f.ret === null ? '?' : f.ret);
+  $('#chapter').textContent = 'Use Linear Search to find the number ' + M.target + ' in the array [' + ARR.join(', ') + '] — show each step clearly.';
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · <b>' + f.compares + '</b> compared' + (f.ret !== null ? ' · return ' + f.ret : '');
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false); render();
+}
+$('#modes').addEventListener('click', e => { const b = e.target.closest('.mode-pill'); if (b) setMode(b.dataset.mode); });
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exercise 1 (b) — Binary Search</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --red:#d64545; --red-pale:#fdeaea;
+    --violet:#8e44ad; --violet-pale:#f3e8fa;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header .series{display:inline-block;background:rgba(255,255,255,.18);border-radius:4px;padding:1px 7px;font-size:10.5px;letter-spacing:.6px;margin-bottom:3px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+  .grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.92fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  .cellrow{display:flex;gap:4px;flex-wrap:wrap;padding:4px 2px;align-items:flex-end}
+  .cell{min-width:46px;text-align:center;transition:opacity .2s}
+  .cell .ix{font-size:10.5px;color:#9aa9b9;font-family:Consolas,monospace;background:#eef3f9;border:1px solid #dde5ee;border-bottom:none;border-radius:6px 6px 0 0;padding:2px 0}
+  .cell .val{font-family:Consolas,monospace;font-size:16.5px;font-weight:700;padding:7px 3px;border:1.5px solid #a9bdd4;border-radius:0 0 6px 6px;background:#fff;color:var(--ink)}
+  .cell.out{opacity:.34}
+  .cell.out .val{background:#f2f4f7;border-color:#dbe1e8}
+  .cell.pos .ix{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .cell.pos .val{background:var(--amber-pale);border-color:var(--amber);color:#92400e;animation:pulse 1s infinite}
+  .cell.found .ix{background:var(--green);color:#fff;border-color:var(--green)}
+  .cell.found .val{background:var(--green-pale);border-color:var(--green);color:var(--green-d)}
+  .cell .mark{font-size:10.5px;font-weight:700;height:14px;color:#c3ccd6;font-family:Consolas,monospace}
+  .cell.pos .mark{color:#c47f12}
+  .cell.found .mark{color:var(--green)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+  .trace{width:100%;border-collapse:collapse;font-size:12px;font-family:Consolas,monospace}
+  .trace th{background:#eef3f9;color:var(--ink-2);font-weight:600;padding:4px 6px;border:1px solid var(--line);font-size:11.5px}
+  .trace td{padding:3.5px 6px;border:1px solid var(--line);text-align:center}
+  .trace td.cmt{text-align:left;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:11.5px}
+  .trace tr.cur{background:var(--amber-pale)}
+  .trace tr.yes{background:var(--green-pale)}
+  .trace tr.pre td{color:#9aa9b9}
+  .trace .y{color:var(--green-d);font-weight:700}
+  .trace .n{color:var(--amber);font-weight:700}
+
+  .answerbox{margin-top:9px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:48px}
+  .answerbox.no{border-color:var(--red);background:var(--red-pale)}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .answerbox.no .alabel{color:var(--red)}
+  .ret{font-family:Consolas,monospace;font-size:17px;font-weight:700;color:var(--green-d)}
+  .answerbox.no .ret{color:var(--red)}
+  .ret-sub{font-size:12.5px;color:var(--ink-2)}
+
+  .statrow{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:8px}
+  .statrow b{color:var(--blue-d);font-family:Consolas,monospace;font-size:14px}
+
+  .steplist{display:flex;flex-direction:column;gap:5px;font-size:13px}
+  .steplist .st{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:8px;background:#f8fafc;border-left:4px solid #c9d6e4}
+  .steplist .st.cur{border-left-color:var(--amber);background:var(--amber-pale)}
+  .steplist .st.done{border-left-color:var(--green);background:var(--green-pale)}
+  .steplist .st b{color:var(--blue-d)}
+  .steplist .st .no{width:18px;height:18px;flex:none;border-radius:50%;background:#e3e9f0;color:#9aa9b9;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .steplist .st.done .no{background:var(--green);color:#fff}
+  .steplist .st.cur .no{background:var(--amber);color:#fff}
+  .slidequote{font-size:12.5px;line-height:1.7;background:#f8fafc;border:1px dashed #c9d6e4;border-radius:9px;padding:8px 11px;margin-bottom:8px}
+  .slidequote b{color:var(--blue-d)}
+  .slidequote code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+  .idea{font-size:12.5px;line-height:1.75;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--violet-pale);border-left:4px solid var(--violet)}
+  .idea b{color:#5b2c6f}
+  .idea code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.5px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:52vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc.bad{background:var(--red-pale);border-left-color:var(--red)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc.bad b{color:var(--red)}
+  .desc code{background:#fff;padding:0 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,168,58,.5)}50%{box-shadow:0 0 0 6px rgba(240,168,58,0)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">Data Structures · Searching · <span class="series">EXERCISE 1 (b)</span></div>
+    <h1>Exercise 1 (b): Binary Search</h1>
+    <div class="chapter" id="chapter"></div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. The exercise: locate 45 <small>— 4 rounds: pos 7 → 11 → 13 → 14, return 14</small></button>
+      <button class="mode-pill" data-mode="b">2. Hit on round one: find 27 <small>— the very first midpoint is the target</small></button>
+      <button class="mode-pill" data-mode="c">3. A value that is absent: 43 <small>— the window collapses → return -1</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+      <a href="fib-recursion.html">9. Fibonacci recursion</a>
+      <a href="stack-reverse.html">10. Reverse a string with a stack</a>
+      <a href="queue-reverse-k.html">11. Reverse the first K of a queue</a>
+      <a href="undo-stack.html">12. Stack · editor Undo</a>
+      <a href="palindrome-stack.html">13. Stack · palindrome checker</a>
+      <a href="queue-clinic.html">14. Queue · clinic line</a>
+      <a href="linear-search.html">15. Linear search</a>
+      <a href="binary-search.html" class="on">16. Binary search</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>🔎 The sorted array DataSet[16] <span class="tag" id="modeTag"></span></h3>
+        <div class="cellrow" id="arrRow"></div>
+        <div class="legend">
+          <span><span class="dot" style="background:#fff;border:1.5px solid #a9bdd4"></span>still inside the search window [left, right]</span>
+          <span><span class="dot" style="background:#f2f4f7;border:1px solid #dbe1e8"></span>already eliminated (cannot be here)</span>
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>pos = this round&rsquo;s midpoint</span>
+          <span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>target found</span>
+        </div>
+        <div class="statrow">
+          <span>looking for id = <b id="statId"></b></span>
+          <span>left = <b id="statL">0</b></span>
+          <span>right = <b id="statR">15</b></span>
+          <span>pos = <b id="statP">—</b></span>
+          <span>rounds done <b id="statLoop">0</b></span>
+        </div>
+        <div class="answerbox" id="answerBox">
+          <span class="alabel">return</span><span class="ret" id="ret">(not finished yet)</span><span class="ret-sub" id="retSub"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🧾 Round-by-round trace (as in the courseware) <span class="tag" id="traceTag"></span></h3>
+        <table class="trace">
+          <thead><tr><th>Loop</th><th>left</th><th>right</th><th>pos</th><th>DataSet[pos]</th><th>Found</th><th>comment</th></tr></thead>
+          <tbody id="traceBody"></tbody>
+        </table>
+        <div class="code-foot" id="traceFoot"></div>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 The algorithm (the courseware pseudocode) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow = the line being executed. <b>Every round halves the window</b>: smaller than the target means the right half (<code>left = pos + 1</code>), larger means the left half (<code>right = pos - 1</code>); once <code>left &gt; right</code> the window is empty → <code>return -1</code>.</div>
+      </div>
+      <div class="card">
+        <h3>📄 The question&rsquo;s wording &amp; key points</h3>
+        <div class="slidequote">
+          <b>Exercise 1 (b):</b> Use <b>Binary Search</b> to locate the number <b>45</b> in the sorted array:<br>
+          <code>[12, 13, 15, 17, 19, 22, 25, 27, 28, 31, 34, 35, 37, 42, 45, 50]</code>
+        </div>
+        <div class="steplist" id="stepList">
+          <div class="st" data-step="1"><span class="no">1</span><span><b>The array must be sorted</b> — start with left = 0, right = numrecords − 1</span></div>
+          <div class="st" data-step="2"><span class="no">2</span><span><b>Take the middle pos = (left + right) / 2</b> — integer division, rounded down</span></div>
+          <div class="st" data-step="3"><span class="no">3</span><span><b>Compare and throw away half</b> — smaller goes right (left = pos + 1), larger goes left (right = pos − 1)</span></div>
+          <div class="st" data-step="4"><span class="no">4</span><span><b>Equal means return pos</b>; an empty window (left &gt; right) means <b>return -1</b></span></div>
+        </div>
+        <div class="idea">
+          <b>Why so fast?</b> Every comparison drops half of the candidates: n = 16 → 8 → 4 → 2 → 1, so at most about ⌈log₂17⌉ = 5 rounds. Time complexity <code>O(log n)</code>, extra space <code>O(1)</code>.<br>
+          <b>The precondition:</b> the array <b>must be sorted</b> (the 16 numbers here are in ascending order), otherwise the comparison with the midpoint cannot tell you which way to go.<br>
+          <b>The courseware example:</b> locating 45 → pos goes 7 (27&lt;45, go right), 11 (35&lt;45, go right), 13 (42&lt;45, go right), 14 (45 == 45) → <code>return 14</code>; the Loop 5 and Loop 6 rows of the courseware table are <b>blank</b> because round 4 found it and the loop stopped early.<br>
+          <b>A small note:</b> the second test in the courseware is typed <code>DatSet[pos]</code> — a typo for <code>DataSet[pos]</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Exercise 1 (b): Binary Search
+ * locate 45 in the sorted 16-element array → pos 7 → 11 → 13 → 14 → return 14
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const ARR = [12, 13, 15, 17, 19, 22, 25, 27, 28, 31, 34, 35, 37, 42, 45, 50];
+const MODES = {
+  a: { target: 45 },   // the courseware example → index 14, 4 rounds (matches its trace table)
+  b: { target: 27 },   // hit on round one → index 7
+  c: { target: 43 }    // absent → -1, the window collapses
+};
+// independent reference (records left/right/pos/found/comment per round)
+function refTrace(arr, id) {
+  let left = 0, right = arr.length - 1, rounds = [], found = -1;
+  while (left <= right) {
+    const pos = Math.floor((left + right) / 2);
+    const v = arr[pos];
+    if (v === id) { rounds.push({ left: left, right: right, pos: pos, val: v, found: true, comment: 'Return ' + pos }); found = pos; break; }
+    if (v < id) { rounds.push({ left: left, right: right, pos: pos, val: v, found: false, comment: v + '<' + id + ' so go right' }); left = pos + 1; }
+    else { rounds.push({ left: left, right: right, pos: pos, val: v, found: false, comment: v + '>' + id + ' so go left' }); right = pos - 1; }
+  }
+  return { rounds: rounds, index: found, verdict: found >= 0 ? String(found) : '-1' };
+}
+for (const key in MODES) MODES[key].ref = refTrace(ARR, MODES[key].target);
+
+const CODE = [
+  'Start',
+  '    int left = 0;                    // our indices start at 0',
+  '    int right = numrecords – 1;      // last element',
+  '    while (left <= right) {',
+  '        int pos = (left + right) / 2  // half way through',
+  '        if (DataSet[pos] == id)',
+  '            return pos                // found so exit',
+  '        if (DataSet[pos] < id)',
+  '            left = pos + 1            // need to search right hand side',
+  '        else',
+  '            right = pos – 1           // need to search left hand side',
+  '    }                                 // end of while loop',
+  '    return -1                         // not found',
+  'End'
+];
+const LN = { initL: 1, initR: 2, while: 3, pos: 4, cmpEq: 5, ret: 6, cmpLt: 7, goRight: 8, goLeft: 10, notFound: 12 };
+
+function buildFrames(modeKey) {
+  const M = MODES[modeKey], id = M.target, n = ARR.length;
+  const frames = [];
+  let left = 0, right = n - 1, pos = null, loop = 0, ret = null, phase = 'intro', rounds = [];
+  const hist = [];                    // trace-table rows
+  let rowIdx = -1;
+
+  function snap(msg, line) {
+    frames.push({
+      msg: msg, line: line, phase: phase, done: false, left: left, right: right, pos: pos,
+      loop: loop, ret: ret, rows: hist.map(r => Object.assign({}, r))
+    });
+  }
+  const g = (function* () {
+    snap('Task: use <b>binary search</b> to locate the number <b>' + id + '</b> in the sorted 16-element array and show every step clearly.<br>Array: <code>[' + ARR.join(', ') + ']</code>', -1);
+    snap('The idea: take the <b>middle of the window [left, right]</b>, <code>pos = (left + right) / 2</code>, and compare it with the target — smaller than the target sends you to the <b>right half</b>, larger sends you to the <b>left half</b>, halving the work every round.', -1);
+    phase = 'init';
+    snap('Initialise: <code>left = 0</code>, <code>right = numrecords – 1 = ' + (n - 1) + '</code> → the search window is <code>[0, ' + (n - 1) + ']</code> (the whole array)', LN.initL);
+    rowIdx++; hist.push({ label: 'Pre-loop', left: 0, right: n - 1, pos: null, val: null, found: null, comment: '' });
+    snap('Row 1 of the trace table (Pre-loop) records the initial values: left = 0, right = ' + (n - 1) + ', with pos and Found still blank.', LN.initR);
+
+    phase = 'loop';
+    while (left <= right) {
+      loop++;
+      pos = Math.floor((left + right) / 2);
+      snap('Round ' + loop + ': the window is <code>[' + left + ', ' + right + ']</code> → <code>pos = (' + left + ' + ' + right + ') / 2 = ' + pos + '</code>, which holds <code>DataSet[' + pos + '] = ' + ARR[pos] + '</code>', LN.pos);
+      rowIdx++;
+      const v = ARR[pos];
+      if (v === id) {
+        ret = String(pos);
+        hist.push({ label: 'Loop ' + loop, left: left, right: right, pos: pos, val: v, found: true, comment: 'Return ' + pos });
+        snap('<b>' + v + ' == ' + id + '</b> → <b>equal</b>: run <code>return ' + pos + ';</code> — found, so the loop stops immediately (nothing else is compared)', LN.cmpEq);
+        snap('Trace-table row Loop ' + loop + ': Found = <span class="y">yes</span>, comment = <i>Return ' + pos + '</i> → the answer is <b>return ' + pos + '</b>.', LN.ret);
+        break;
+      } else if (v < id) {
+        hist.push({ label: 'Loop ' + loop, left: left, right: right, pos: pos, val: v, found: false, comment: v + '<' + id + ' so go right' });
+        snap('<code>DataSet[' + pos + '] = ' + v + ' &lt; id = ' + id + '</code> → the target must be in the <b>right half</b> (the array is ascending): <code>left = pos + 1 = ' + (pos + 1) + '</code>', LN.cmpLt);
+        snap('Trace-table row Loop ' + loop + ': Found = <span class="n">no</span>, comment = <i>' + v + '&lt;' + id + ' so go right</i>; the window shrinks to <code>[' + (pos + 1) + ', ' + right + ']</code> → all ' + (pos + 1) + ' elements on the left are eliminated', LN.goRight);
+        left = pos + 1;
+      } else {
+        hist.push({ label: 'Loop ' + loop, left: left, right: right, pos: pos, val: v, found: false, comment: v + '>' + id + ' so go left' });
+        snap('<code>DataSet[' + pos + '] = ' + v + ' &gt; id = ' + id + '</code> → the target must be in the <b>left half</b>: <code>right = pos – 1 = ' + (pos - 1) + '</code>', LN.goLeft);
+        snap('Trace-table row Loop ' + loop + ': Found = <span class="n">no</span>, comment = <i>' + v + '&gt;' + id + ' so go left</i>; the window shrinks to <code>[' + left + ', ' + (pos - 1) + ']</code> → the whole right half is eliminated', LN.goLeft);
+        right = pos - 1;
+      }
+    }
+
+    phase = 'out';
+    if (ret === null) {
+      ret = '-1';
+      snap('The window is now empty: <code>left = ' + left + ' &gt; right = ' + right + '</code> → <code>while (left &lt;= right)</code> no longer holds, the loop ends and <code>return -1;</code> runs (not found)', LN.notFound);
+    } else {
+      snap('Return <b>' + ret + '</b>: ' + id + ' sits at index <b>' + ret + '</b> (element ' + (+ret + 1) + ' of the array) after <b>' + loop + '</b> round(s).', -1);
+    }
+    phase = 'done';
+    const worst = Math.ceil(Math.log2(n + 1));
+    snap('✔ Result: <b>return ' + ret + '</b> — ' + (ret === '-1' ? id + ' is not in the array' : id + ' is at index ' + ret) + '.<br>📌 <b>' + loop + '</b> round(s) of comparison (16 elements, at most about ' + worst + ').<br>💡 Binary search throws away half every round: time <b>O(log n)</b>, space O(1); the catch is that <b>the array must be sorted</b>.<br>🔁 Compare with the linear search of exercise (a): for the same "find one number" job, linear search may inspect all 16 while binary search needs at most 5.', -1);
+    frames[frames.length - 1].done = true;
+  })();
+  for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { a: buildFrames('a'), b: buildFrames('b'), c: buildFrames('c') };
+/*%%LOGIC_END%%*/
+
+let mode = 'a', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+function renderArr(f) {
+  const row = $('#arrRow'); row.innerHTML = '';
+  const inside = k => k >= f.left && k <= f.right;
+  ARR.forEach((v, k) => {
+    const d = document.createElement('div');
+    let cls = 'cell';
+    if (f.ret !== null && f.ret !== '-1' && k === +f.ret) cls += ' found';
+    else if (!inside(k) && f.loop > 0) cls += ' out';
+    if (f.pos === k && f.phase === 'loop') cls += ' pos';
+    d.className = cls;
+    const mark = (f.pos === k && f.phase === 'loop') ? 'pos' : (f.ret !== null && f.ret !== '-1' && k === +f.ret ? '★' : (inside(k) && f.loop > 0 ? 'in' : ''));
+    d.innerHTML = '<div class="ix">' + k + '</div><div class="val">' + v + '</div><div class="mark">' + mark + '</div>';
+    row.appendChild(d);
+  });
+}
+function renderTrace(f) {
+  const body = $('#traceBody'); body.innerHTML = '';
+  f.rows.forEach((r, k) => {
+    const tr = document.createElement('tr');
+    const cur = (k === f.rows.length - 1) && !f.done;
+    tr.className = r.label === 'Pre-loop' ? 'pre' : (r.found ? 'yes' : (cur ? 'cur' : ''));
+    tr.innerHTML = '<td>' + r.label + '</td><td>' + r.left + '</td><td>' + r.right + '</td><td>' +
+      (r.pos === null ? '' : r.pos) + '</td><td>' + (r.val === null ? '' : 'Data[' + r.pos + ']=' + r.val) + '</td><td>' +
+      (r.found === null ? '' : (r.found ? '<span class="y">yes</span>' : '<span class="n">no</span>')) + '</td><td class="cmt">' + r.comment + '</td>';
+    body.appendChild(tr);
+  });
+  $('#traceTag').textContent = f.rows.length + ' row(s)';
+  const M = MODES[mode];
+  const done = !!f.done, found = f.ret !== null && f.ret !== '-1';
+  $('#traceFoot').innerHTML = done
+    ? (found ? 'Found after ' + M.ref.rounds.length + ' round(s) — the blank rows after Loop ' + M.ref.rounds.length + ' in the courseware table are there because the loop <b>stopped early</b>.'
+             : 'All ' + M.ref.rounds.length + ' rounds ran and the window collapsed without a match → <code>return -1</code>.')
+    : 'Each finished round adds one row, exactly like the courseware table: left / right / pos / Found / comment.';
+}
+function renderAnswer(f) {
+  const box = $('#answerBox');
+  const M = MODES[mode];
+  $('#statId').textContent = String(M.target);
+  $('#statL').textContent = String(f.left);
+  $('#statR').textContent = String(f.right);
+  $('#statP').textContent = f.pos === null ? '—' : String(f.pos);
+  $('#statLoop').textContent = String(f.loop);
+  if (f.ret === null) { $('#ret').textContent = '(not finished yet)'; $('#retSub').textContent = 'the window still holds ' + Math.max(0, f.right - f.left + 1) + ' candidate(s)'; box.className = 'answerbox'; }
+  else {
+    $('#ret').textContent = 'return ' + f.ret;
+    $('#retSub').textContent = f.ret === '-1' ? '(' + M.target + ' is not in the array)' : '(index ' + f.ret + ' holds ' + M.target + ')';
+    box.className = 'answerbox' + (f.ret === '-1' ? ' no' : '');
+  }
+}
+function renderSteps(f) {
+  document.querySelectorAll('#stepList .st').forEach(el => {
+    const k = el.dataset.step;
+    const cur = (k === '1' && f.phase === 'init') || (k === '2' && f.phase === 'loop') || (k === '3' && f.phase === 'loop' && f.loop > 0);
+    const done = k === '1' ? f.phase !== 'intro' : (k === '2' ? f.loop > 0 : (k === '3' ? f.loop > 1 : f.ret !== null));
+    el.className = 'st' + (done ? ' done' : (cur ? ' cur' : ''));
+  });
+}
+function renderCode(f) {
+  const M = MODES[mode];
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = 'DataSet[' + ARR.length + '] · id = ' + M.target;
+  CODE.forEach((txt, k) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === k ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = k + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) { const rows = box.querySelectorAll('.coderow'); if (rows[f.line]) box.scrollTop = Math.max(0, rows[f.line].offsetTop - box.clientHeight / 2); }
+}
+function render() {
+  const f = frames[idx];
+  renderArr(f); renderTrace(f); renderAnswer(f); renderSteps(f); renderCode(f);
+  const d = $('#desc');
+  const no = f.ret === '-1';
+  d.className = 'desc' + (f.done ? (no ? ' bad' : ' done') : '');
+  d.innerHTML = f.msg;
+  $('#phaseTag').textContent = f.phase === 'intro' ? 'task & idea' : f.phase === 'init' ? 'initialising left / right' : f.phase === 'loop' ? 'round ' + f.loop + ' (pos = ' + (f.pos === null ? '—' : f.pos) + ')' : f.phase === 'out' ? 'loop over → return' : 'done ✔';
+  const M = MODES[mode];
+  $('#modeTag').textContent = 'locate id = ' + M.target + ' · result ' + (f.ret === null ? '?' : f.ret);
+  $('#chapter').textContent = 'Use Binary Search to locate the number ' + M.target + ' in the sorted array [' + ARR.join(', ') + '] — show each step clearly.';
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · round <b>' + f.loop + '</b>' + (f.ret !== null ? ' · return ' + f.ret : '');
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false); render();
+}
+$('#modes').addEventListener('click', e => { const b = e.target.closest('.mode-pill'); if (b) setMode(b.dataset.mode); });
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>

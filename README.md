@@ -24,6 +24,8 @@ network required. Open any file in a browser and it runs.
 | `undo-stack.html` | Use Case 1 — Stack: Undo in text editors | The `STACK VS. QUEUE` slide: `Type "Hello"` → `Type " World"` → `Delete 'o'` (the o mid-string) are all pushed onto the action stack. Each Undo pops the top action and reverses it — a deleted character is inserted back, a typed run is removed — taking the document `Hello Wrld` → `Hello World` → `Hello` → empty, and finally printing `Nothing to undo`. The slide's Problem / Why Stack? wording and a note explaining why a queue would undo the *oldest* action instead are included. |
 | `palindrome-stack.html` | Question 1 — Stack application: palindrome checker | The week-4 exercise: `isPalindrome("radar")` → `true`, `isPalindrome("hello")` → `false` (plus `"level"`). Every character is pushed (boxes grow bottom-up), popped one at a time into a reversed string, and then compared with the original character by character — the comparison stops at the first difference, so `hello` needs a single pair to answer `false`. The slide's Problem / Hint wording is quoted and a closing note shows the faster "push only the first half" variant. |
 | `queue-clinic.html` | Question 2 — Queue application: clinic waiting line | The week-4 exercise: `std::queue<std::string>` driven by three commands — `ARRIVE <name>` enqueues at the rear, `CALL` dequeues the front and prints `Now serving: …`, `SHOW` peeks at the front without touching the queue — and an empty queue makes both `CALL` and `SHOW` print `No patients waiting`. Three command sequences (including an "empty first" and a "busy stretch" run) drive the queue, a live cout console and the code highlight in step. |
+| `linear-search.html` | Exercise 1 (a) — Linear search | The courseware exercise: find `27` in `[10, 5, 18, 27, 32, 40, 3, 9]`. The index pointer walks right one cell at a time while every element is marked comparing / already compared / found, and a comparison log builds up next to it (`DataSet[k] = v` versus `id`) until the green `return` box answers. Three runs: `27` (4th comparison hits → `return 3`), the absent `41` (all 8 compared → `return -1`) and the last element `9` (worst case). |
+| `binary-search.html` | Exercise 1 (b) — Binary search | The courseware exercise: locate `45` in the sorted 16-element array. The array highlights the live `[left, right]` window, greys out eliminated cells and pulses the `pos` cell each round, and the panel reproduces the slide's own trace table (`Loop / left / right / pos / DataSet[pos] / Found / comment`) row by row — the Pre-loop row and Loops 1–4 match the slide exactly. Three runs: `45` (pos 7→11→13→14 → `return 14`), `27` (hit on round one) and the absent `43` (window collapses → `return -1`). |
 
 Sample data matches the lecture slides: the complete binary tree 1–7, the
 15→25→35… probing sequence, the apple/banana/orange map, and the BST built from
@@ -62,6 +64,8 @@ queue-reverse-k.html        exercise: reverse first K elements of a queue
 undo-stack.html             use case 1: stack — Undo in text editors
 palindrome-stack.html       question 1: stack — palindrome checker
 queue-clinic.html           question 2: queue — clinic waiting line simulator
+linear-search.html          exercise 1 (a): linear search
+binary-search.html          exercise 1 (b): binary search
 ```
 
 A Chinese-language edition of these demos exists separately for classroom use.
