@@ -291,6 +291,44 @@ const T = {
  "pause": "⏸ Pause",
  "play": "▶ Play"
 };
+
+/* ===== shared runtime for every generated page =====
+   RT.frame      build one frame: write only what differs, defaults fill the rest
+                 (this structurally removes the classic "forgot a frame field" bug)
+   RT.cloneRows  deep-copy trace-table rows (frames must snapshot, never share rows)
+   RT.a2s        array -> "[1, 2, 3]"
+   RT.verifier   per-frame check helpers: leak (unfilled placeholder / typo) /
+                 perm (is a permutation) / multiset (multiset preserved) */
+const RT = {
+  frame(partial, extra) {
+    return Object.assign({
+      msg: '', line: -1, phase: '', done: false, bad: false, tail: '',
+      rows: [], stats: [], stepStates: {}, ret: '', retSub: '', view: {}
+    }, partial, extra || {});
+  },
+  cloneRows(rows) { return rows.map(r => ({ label: r.label, cols: r.cols.slice() })); },
+  a2s(arr) { return '[' + arr.join(', ') + ']'; },
+  verifier() {
+    const out = [];
+    return {
+      out: out,
+      bad(m) { out.push(m); },
+      leak(f, k) {
+        if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) out.push(k + ': msg leak: ' + f.msg);
+        if (f.stats.some(s => /undefined|\{\d\}/.test(s))) out.push(k + ': stats leak');
+      },
+      perm(arr, ms) {
+        return JSON.stringify(arr.slice().sort((x, y) => x - y)) === JSON.stringify(ms);
+      },
+      multiset(arr, skip, extraVals, ms, k) {
+        const rest = arr.filter((x, q) => q !== skip).concat(extraVals).sort((x, y) => x - y);
+        if (JSON.stringify(rest) !== JSON.stringify(ms)) out.push(k + ': multiset broken');
+        return out.length === 0;
+      }
+    };
+  }
+};
+
 /*%%LOGIC_BEGIN%%*/
 const PRESETS = {
   a: { arr: [4, 10, 3, 5, 1, 2] },
@@ -346,10 +384,10 @@ function buildFrames(mk) {
   let cmp = 0, swp = 0, phase = 'intro', size = n, root = -1, big = -1, l = -1, r = -1, swapping = false;
   const sortedTail = [];
   function snap(msg, line, extra) {
-    frames.push(Object.assign({
+    frames.push(RT.frame({
       msg: msg, line: line, phase: phase, done: false, bad: false,
       tail: F(T.tail, cmp, swp),
-      rows: rows.map(r => ({ label: r.label, cols: r.cols.slice() })),
+      rows: RT.cloneRows(rows),
       stats: [F(T.stPhase, T.phase[phase] || phase), F(T.stCmp, cmp), F(T.stSwp, swp), F(T.stSorted, sortedTail.length, n)],
       stepStates: {
         '1': (phase === 'build' ? 'cur' : (phase === 'extract' || phase === 'done' ? 'done' : '')),
@@ -360,7 +398,7 @@ function buildFrames(mk) {
       ret: '[' + a.join(', ') + ']', retSub: T.retSubWait,
       view: { n: n, arr: a.slice(), size: size, root: root, big: big, l: l, r: r, swapping: swapping,
               sortedTail: sortedTail.slice(), phase: phase, cmp: cmp, swp: swp, extra: '' }
-    }, extra || {}));
+    }, extra));
   }
   // the same siftDown as the reference, unrolled frame by frame
   function* sift(root0, size0) {
@@ -423,7 +461,7 @@ for (const k in PRESETS) CACHE[k] = buildFrames(k);
 
 // ---- self-check: frames vs the independent reference (called by the node tests)
 function verify() {
-  const out = [], bad = m => out.push(m);
+  const __v = RT.verifier(), out = __v.out, bad = __v.bad;
   for (const k in PRESETS) {
     const M = PRESETS[k], F2 = CACHE[k], L = F2[F2.length - 1], R = M.ref;
     const ms = M.arr.slice().sort((x, y) => x - y), n = M.arr.length;
@@ -431,7 +469,7 @@ function verify() {
     if (L.view.cmp !== R.cmp || L.view.swp !== R.swp) bad(k + ': counters ' + L.view.cmp + '/' + L.view.swp + ' vs ' + R.cmp + '/' + R.swp);
     for (const f of F2) {
       const v = f.view;
-      if (JSON.stringify(v.arr.slice().sort((x, y) => x - y)) !== JSON.stringify(ms)) bad(k + ': not a permutation');
+      if (!__v.perm(v.arr, ms)) bad(k + ': not a permutation');
       if (v.phase === 'heapOk') {   // once the heap is built/rebuilt: the heap region must satisfy the max-heap property
         for (let rt = 0; rt < v.size; rt++) {
           const Lq = 2 * rt + 1, Rq = 2 * rt + 2;
@@ -441,7 +479,7 @@ function verify() {
       }
       for (const q of v.sortedTail) if (v.arr[q] !== ms[q]) bad(k + ': sorted tail wrong at ' + q);
       if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) bad(k + ': msg leak: ' + f.msg);
-      if (f.stats.some(s => /undefined|\{\d\}/.test(s))) bad(k + ': stats leak');
+      __v.leak(f, k);
     }
     if (L.stepStates['4'] !== 'done') bad(k + ': step4');
   }

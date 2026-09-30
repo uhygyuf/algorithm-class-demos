@@ -289,6 +289,44 @@ const T = {
  "pause": "⏸ Pause",
  "play": "▶ Play"
 };
+
+/* ===== shared runtime for every generated page =====
+   RT.frame      build one frame: write only what differs, defaults fill the rest
+                 (this structurally removes the classic "forgot a frame field" bug)
+   RT.cloneRows  deep-copy trace-table rows (frames must snapshot, never share rows)
+   RT.a2s        array -> "[1, 2, 3]"
+   RT.verifier   per-frame check helpers: leak (unfilled placeholder / typo) /
+                 perm (is a permutation) / multiset (multiset preserved) */
+const RT = {
+  frame(partial, extra) {
+    return Object.assign({
+      msg: '', line: -1, phase: '', done: false, bad: false, tail: '',
+      rows: [], stats: [], stepStates: {}, ret: '', retSub: '', view: {}
+    }, partial, extra || {});
+  },
+  cloneRows(rows) { return rows.map(r => ({ label: r.label, cols: r.cols.slice() })); },
+  a2s(arr) { return '[' + arr.join(', ') + ']'; },
+  verifier() {
+    const out = [];
+    return {
+      out: out,
+      bad(m) { out.push(m); },
+      leak(f, k) {
+        if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) out.push(k + ': msg leak: ' + f.msg);
+        if (f.stats.some(s => /undefined|\{\d\}/.test(s))) out.push(k + ': stats leak');
+      },
+      perm(arr, ms) {
+        return JSON.stringify(arr.slice().sort((x, y) => x - y)) === JSON.stringify(ms);
+      },
+      multiset(arr, skip, extraVals, ms, k) {
+        const rest = arr.filter((x, q) => q !== skip).concat(extraVals).sort((x, y) => x - y);
+        if (JSON.stringify(rest) !== JSON.stringify(ms)) out.push(k + ': multiset broken');
+        return out.length === 0;
+      }
+    };
+  }
+};
+
 /*%%LOGIC_BEGIN%%*/
 const PRESETS = {
   a: { arr: [170, 45, 75, 90, 802, 24, 2, 66] },
@@ -334,10 +372,10 @@ function buildFrames(mk) {
   let checks = 0, mov = 0, pass = 0, phase = 'intro', idx = -1, digit = -1, pend = 0, colBucket = -1, colIdx = -1;
   let buckets = []; for (let b = 0; b < 10; b++) buckets.push([]);
   function snap(msg, line, extra) {
-    frames.push(Object.assign({
+    frames.push(RT.frame({
       msg: msg, line: line, phase: phase, done: false, bad: false,
       tail: F(T.tail, pass + 1, checks, mov),
-      rows: rows.map(r => ({ label: r.label, cols: r.cols.slice() })),
+      rows: RT.cloneRows(rows),
       stats: [F(T.stPass, pass + 1, P), F(T.stChecks, checks), F(T.stMov, mov), F(T.stPend, pend, n)],
       stepStates: {
         '1': (phase === 'distribute' ? 'cur' : (phase === 'collect' || phase === 'done' ? 'done' : '')),
@@ -350,7 +388,7 @@ function buildFrames(mk) {
               buckets: buckets.map(b => b.slice()), colBucket: colBucket, colIdx: colIdx,
               phase: phase, cmp: checks, swp: mov,
               clean: (phase === 'intro' || phase === 'distribute'), extra: '' }
-    }, extra || {}));
+    }, extra));
   }
   const g = (function* () {
     snap(F(T.intro1, a.join(', ')), -1);
@@ -406,7 +444,7 @@ function sortedByLastDigits(arr, pass) {
   return true;
 }
 function verify() {
-  const out = [], bad = m => out.push(m);
+  const __v = RT.verifier(), out = __v.out, bad = __v.bad;
   for (const k in PRESETS) {
     const M = PRESETS[k], F2 = CACHE[k], L = F2[F2.length - 1], R = M.ref;
     const ms = M.arr.slice().sort((x, y) => x - y), n = M.arr.length;
@@ -423,11 +461,11 @@ function verify() {
         if (JSON.stringify(all) !== JSON.stringify(ms)) bad(k + ': distribution multiset broken at pend=' + v.pend);
       }
       if (v.clean) {   // the array is a full permutation at this point (untouched while distributing, rebuilt once collection completes)
-        if (JSON.stringify(v.arr.slice().sort((x, y) => x - y)) !== JSON.stringify(ms)) bad(k + ': not a permutation');
+        if (!__v.perm(v.arr, ms)) bad(k + ': not a permutation');
       }
       // after each pass: the array is sorted by its last (pass+1) digits (the core LSD property)
       if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) bad(k + ': msg leak: ' + f.msg);
-      if (f.stats.some(s => /undefined|\{\d\}/.test(s))) bad(k + ': stats leak');
+      __v.leak(f, k);
     }
     // the LSD property, checked at every frame where a pass record appears
     let rowSeen = 0;

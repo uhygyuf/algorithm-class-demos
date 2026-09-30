@@ -292,6 +292,44 @@ const T = {
  "pause": "⏸ Pause",
  "play": "▶ Play"
 };
+
+/* ===== shared runtime for every generated page =====
+   RT.frame      build one frame: write only what differs, defaults fill the rest
+                 (this structurally removes the classic "forgot a frame field" bug)
+   RT.cloneRows  deep-copy trace-table rows (frames must snapshot, never share rows)
+   RT.a2s        array -> "[1, 2, 3]"
+   RT.verifier   per-frame check helpers: leak (unfilled placeholder / typo) /
+                 perm (is a permutation) / multiset (multiset preserved) */
+const RT = {
+  frame(partial, extra) {
+    return Object.assign({
+      msg: '', line: -1, phase: '', done: false, bad: false, tail: '',
+      rows: [], stats: [], stepStates: {}, ret: '', retSub: '', view: {}
+    }, partial, extra || {});
+  },
+  cloneRows(rows) { return rows.map(r => ({ label: r.label, cols: r.cols.slice() })); },
+  a2s(arr) { return '[' + arr.join(', ') + ']'; },
+  verifier() {
+    const out = [];
+    return {
+      out: out,
+      bad(m) { out.push(m); },
+      leak(f, k) {
+        if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) out.push(k + ': msg leak: ' + f.msg);
+        if (f.stats.some(s => /undefined|\{\d\}/.test(s))) out.push(k + ': stats leak');
+      },
+      perm(arr, ms) {
+        return JSON.stringify(arr.slice().sort((x, y) => x - y)) === JSON.stringify(ms);
+      },
+      multiset(arr, skip, extraVals, ms, k) {
+        const rest = arr.filter((x, q) => q !== skip).concat(extraVals).sort((x, y) => x - y);
+        if (JSON.stringify(rest) !== JSON.stringify(ms)) out.push(k + ': multiset broken');
+        return out.length === 0;
+      }
+    };
+  }
+};
+
 /*%%LOGIC_BEGIN%%*/
 const PRESETS = {
   a: { arr: [8, 9, 1, 7, 2, 3, 5, 4, 6, 0] },
@@ -336,10 +374,10 @@ function buildFrames(mk) {
   const M = PRESETS[mk], n = M.arr.length, a = M.arr.slice(), gaps = gapsOf(n), frames = [], rows = [];
   let cmp = 0, mov = 0, gap = -1, i = -1, j = -1, key = null, hole = -1, phase = 'intro';
   function snap(msg, line, extra) {
-    frames.push(Object.assign({
+    frames.push(RT.frame({
       msg: msg, line: line, phase: phase, done: false, bad: false,
       tail: F(T.tail, gap, cmp, mov),
-      rows: rows.map(r => ({ label: r.label, cols: r.cols.slice() })),
+      rows: RT.cloneRows(rows),
       stats: [F(T.stGap, gap), F(T.stCmp, cmp), F(T.stMov, mov), F(T.stGaps, gaps.join(' → ') )],
       stepStates: {
         '1': (phase === 'intro' ? '' : (phase === 'done' ? 'done' : 'cur')),
@@ -350,7 +388,7 @@ function buildFrames(mk) {
       ret: '[' + a.map((x, q) => (q === hole ? '·' : x)).join(', ') + ']', retSub: T.retSubWait,
       view: { n: n, arr: a.slice(), gap: gap, i: i, j: j, key: key, hole: hole, phase: phase,
               cmp: cmp, mov: mov, extra: '' }
-    }, extra || {}));
+    }, extra));
   }
   const g = (function* () {
     snap(F(T.intro1, a.join(', ')), -1);
@@ -392,7 +430,7 @@ for (const k in PRESETS) CACHE[k] = buildFrames(k);
 
 // ---- self-check: frames vs the independent reference (called by the node tests)
 function verify() {
-  const out = [], bad = m => out.push(m);
+  const __v = RT.verifier(), out = __v.out, bad = __v.bad;
   for (const k in PRESETS) {
     const M = PRESETS[k], F2 = CACHE[k], L = F2[F2.length - 1], R = M.ref;
     const ms = M.arr.slice().sort((x, y) => x - y), n = M.arr.length;
@@ -407,7 +445,7 @@ function verify() {
         holeSeen = true;
         const rest = v.arr.filter((x, q) => q !== v.hole).concat([v.key]).sort((x, y) => x - y);
         if (JSON.stringify(rest) !== JSON.stringify(ms)) bad(k + ': multiset+key broken');
-      } else if (JSON.stringify(v.arr.slice().sort((x, y) => x - y)) !== JSON.stringify(ms)) bad(k + ': not a permutation');
+      } else if (!__v.perm(v.arr, ms)) bad(k + ': not a permutation');
       if (v.gap >= 1 && v.hole < 0 && f.phase === 'gapEnd') {
         for (let r0 = 0; r0 < v.gap; r0++) {
           const seq = []; for (let q = r0; q < n; q += v.gap) seq.push(v.arr[q]);
@@ -415,7 +453,7 @@ function verify() {
         }
       }
       if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) bad(k + ': msg leak: ' + f.msg);
-      if (f.stats.some(s => /undefined|\{\d\}/.test(s))) bad(k + ': stats leak');
+      __v.leak(f, k);
     }
     if (!holeSeen) bad(k + ': no hole frame');
     if (L.stepStates['4'] !== 'done') bad(k + ': step4');
