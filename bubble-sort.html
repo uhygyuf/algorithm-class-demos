@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bubble Sort</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --red:#d64545; --red-pale:#fdeaea;
+    --violet:#8e44ad; --violet-pale:#f3e8fa;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+  .grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.92fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  .cellrow{display:flex;gap:6px;flex-wrap:wrap;padding:4px 2px 0;align-items:flex-end}
+  .cell{min-width:52px;text-align:center;transition:transform .18s}
+  .cell .ix{font-size:10.5px;color:#9aa9b9;font-family:Consolas,monospace;background:#eef3f9;border:1px solid #dde5ee;border-bottom:none;border-radius:6px 6px 0 0;padding:2px 0}
+  .cell .val{font-family:Consolas,monospace;font-size:18px;font-weight:700;padding:8px 4px;border:1.5px solid #a9bdd4;border-radius:0 0 6px 6px;background:#fff;color:var(--ink)}
+  .cell.sorted .ix{background:#e8f3ec;color:#7fae94}
+  .cell.sorted .val{background:var(--green-pale);border-color:var(--green);color:var(--green-d)}
+  .cell.pair .ix{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .cell.pair .val{background:var(--amber-pale);border-color:var(--amber);color:#92400e;animation:pulse 1s infinite}
+  .cell.swapping .ix{background:var(--violet);color:#fff;border-color:var(--violet)}
+  .cell.swapping .val{background:var(--violet-pale);border-color:var(--violet);color:#5b2c6f}
+  .cell .mark{font-size:10.5px;font-weight:700;height:15px;color:#c3ccd6;font-family:Consolas,monospace}
+  .cell.pair .mark{color:#c47f12}
+  .cell.swapping .mark{color:var(--violet)}
+  .cell.sorted .mark{color:var(--green)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .statrow{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:8px}
+  .statrow b{color:var(--blue-d);font-family:Consolas,monospace;font-size:14px}
+
+  .answerbox{margin-top:9px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:48px}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .ret{font-family:Consolas,monospace;font-size:16px;font-weight:700;color:var(--green-d)}
+  .ret-sub{font-size:12.5px;color:var(--ink-2)}
+  .badge{display:inline-block;background:var(--violet-pale);color:#5b2c6f;border:1px solid var(--violet);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600}
+
+  .trace{width:100%;border-collapse:collapse;font-size:12px}
+  .trace th{background:#eef3f9;color:var(--ink-2);font-weight:600;padding:4px 6px;border:1px solid var(--line);font-size:11.5px}
+  .trace td{padding:3.5px 6px;border:1px solid var(--line);text-align:center;font-family:Consolas,monospace}
+  .trace td.note{text-align:left;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:11.5px}
+  .trace tr.cur{background:var(--amber-pale)}
+  .trace tr.done{background:var(--green-pale)}
+  .trace .y{color:var(--green-d);font-weight:700}
+
+  .steplist{display:flex;flex-direction:column;gap:5px;font-size:13px}
+  .steplist .st{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:8px;background:#f8fafc;border-left:4px solid #c9d6e4}
+  .steplist .st.cur{border-left-color:var(--amber);background:var(--amber-pale)}
+  .steplist .st.done{border-left-color:var(--green);background:var(--green-pale)}
+  .steplist .st b{color:var(--blue-d)}
+  .steplist .st .no{width:18px;height:18px;flex:none;border-radius:50%;background:#e3e9f0;color:#9aa9b9;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .steplist .st.done .no{background:var(--green);color:#fff}
+  .steplist .st.cur .no{background:var(--amber);color:#fff}
+  .idea{font-size:12.5px;line-height:1.75;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--violet-pale);border-left:4px solid var(--violet)}
+  .idea b{color:#5b2c6f}
+  .idea code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.5px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:52vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc code{background:#fff;padding:0 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,168,58,.5)}50%{box-shadow:0 0 0 6px rgba(240,168,58,0)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">Data Structures · Sorting</div>
+    <h1>Bubble Sort</h1>
+    <div class="chapter" id="chapter"></div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. A typical case: 6 shuffled numbers <small>— stops after 3 passes (pass 3 swaps nothing)</small></button>
+      <button class="mode-pill" data-mode="b">2. Already sorted: the best case <small>— 1 pass, 4 comparisons, 0 swaps → break</small></button>
+      <button class="mode-pill" data-mode="c">3. Fully reversed: the worst case <small>— 5 passes, 15 comparisons, 15 swaps</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+      <a href="fib-recursion.html">9. Fibonacci recursion</a>
+      <a href="stack-reverse.html">10. Reverse a string with a stack</a>
+      <a href="queue-reverse-k.html">11. Reverse the first K of a queue</a>
+      <a href="undo-stack.html">12. Stack · editor Undo</a>
+      <a href="palindrome-stack.html">13. Stack · palindrome checker</a>
+      <a href="queue-clinic.html">14. Queue · clinic line</a>
+      <a href="linear-search.html">15. Linear search</a>
+      <a href="binary-search.html">16. Binary search</a>
+      <a href="bubble-sort.html" class="on">17. Bubble sort</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>🔢 The array a[] <span class="tag" id="modeTag"></span></h3>
+        <div class="cellrow" id="arrRow"></div>
+        <div class="legend">
+          <span><span class="dot" style="background:#fff;border:1.5px solid #a9bdd4"></span>not sorted yet</span>
+          <span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>comparing a[j] with a[j+1]</span>
+          <span><span class="dot" style="background:#f3e8fa;border:1px solid #8e44ad"></span>just swapped (out of order → exchanged)</span>
+          <span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>settled (each pass pins one maximum)</span>
+        </div>
+        <div class="statrow">
+          <span>pass i = <b id="statI">0</b></span>
+          <span>comparisons <b id="statCmp">0</b></span>
+          <span>swaps <b id="statSwp">0</b></span>
+          <span>settled <b id="statDone">0</b> / <b id="statN">6</b></span>
+        </div>
+        <div class="answerbox" id="answerBox">
+          <span class="alabel">result</span><span class="ret" id="ret">(not finished yet)</span><span class="ret-sub" id="retSub"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🧾 Pass-by-pass record <span class="tag" id="traceTag"></span></h3>
+        <table class="trace">
+          <thead><tr><th>Pass</th><th>Comparisons</th><th>Swaps</th><th>Array after the pass</th><th>Note</th></tr></thead>
+          <tbody id="traceBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 The algorithm (courseware-style C++) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow = the line being executed. <b>Bubble sort</b> compares neighbours and swaps them when they are out of order — after every pass the largest value has bubbled to the end, so the next pass ignores it.</div>
+      </div>
+      <div class="card">
+        <h3>📄 Key points</h3>
+        <div class="steplist" id="stepList">
+          <div class="st" data-step="1"><span class="no">1</span><span><b>Compare neighbours</b> — look only at the pair a[j] and a[j+1]</span></div>
+          <div class="st" data-step="2"><span class="no">2</span><span><b>Swap when out of order</b> — a[j] &gt; a[j+1] means they are the wrong way round</span></div>
+          <div class="st" data-step="3"><span class="no">3</span><span><b>One value per pass</b> — after pass i the largest value sits at a[n−1−i]</span></div>
+          <div class="st" data-step="4"><span class="no">4</span><span><b>0 swaps → stop early</b> — a pass with no swap means it is already sorted, <code>break</code></span></div>
+        </div>
+        <div class="idea">
+          <b>Why &ldquo;bubble&rdquo;?</b> During a pass the larger element keeps swapping with its right-hand neighbour, floating like a bubble to the end of the unsorted part (sorting ascending, the maximum travels right).<br>
+          <b>Complexity:</b> comparisons = (n−1) + (n−2) + … + 1 = n(n−1)/2 → time <b>O(n²)</b>; with the <code>swapped</code> flag an already sorted array costs one pass of n−1 comparisons and 0 swaps → <b>O(n)</b>; extra space <b>O(1)</b>.<br>
+          <b>Properties:</b> it swaps only neighbours and never swaps equal values, so bubble sort is <b>stable</b> (equal values keep their relative order); it does many swaps, though, so it is rarely used on large arrays.<br>
+          <b>In this demo:</b> six reversed numbers need 5 passes / 15 comparisons / 15 swaps — the worst case.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="Back to start (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="Step back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="Play/Pause (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Step forward (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="Jump to result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+/* ============================================================
+ * Bubble Sort
+ * compare neighbours, swap when out of order; each pass bubbles the maximum to the end; the swapped flag allows an early exit
+ * ============================================================ */
+/*%%LOGIC_BEGIN%%*/
+const MODES = {
+  a: { arr: [5, 1, 4, 2, 8, 7] },   // a typical case → pass 3 swaps nothing, stop early
+  b: { arr: [1, 2, 3, 4, 5] },      // already sorted → 1 pass, 4 comparisons, 0 swaps → break (best case)
+  c: { arr: [6, 5, 4, 3, 2, 1] }    // fully reversed → 5 passes, 15 comparisons, 15 swaps (worst case)
+};
+// independent reference: same counting rules as this page (comparison = every a[j]/a[j+1] test; swap = every real exchange)
+function refBubble(input) {
+  const a = input.slice(), n = a.length;
+  let compares = 0, swaps = 0, passes = 0, early = false;
+  const passRows = [];
+  for (let i = 0; i < n - 1; i++) {
+    let swThis = 0, cmpThis = 0;
+    for (let j = 0; j < n - 1 - i; j++) {
+      compares++; cmpThis++;
+      if (a[j] > a[j + 1]) { const t = a[j]; a[j] = a[j + 1]; a[j + 1] = t; swaps++; swThis++; }
+    }
+    passes++;
+    passRows.push({ label: 'Pass ' + (i + 1), compares: cmpThis, swaps: swThis, arr: a.slice(), early: swThis === 0 });
+    if (swThis === 0) { early = true; break; }
+  }
+  return { arr: a, compares: compares, swaps: swaps, passes: passes, early: early, rows: passRows, sorted: input.slice().sort((x, y) => x - y) };
+}
+for (const key in MODES) MODES[key].ref = refBubble(MODES[key].arr);
+
+const CODE = [
+  'void bubbleSort(int a[], int n) {',
+  '    for (int i = 0; i < n - 1; i++) {          // pass i',
+  '        bool swapped = false;',
+  '        for (int j = 0; j < n - 1 - i; j++) {  // only the unsorted part',
+  '            if (a[j] > a[j + 1]) {             // out of order?',
+  '                int t = a[j];                  // swap a[j] and a[j+1]',
+  '                a[j] = a[j + 1];',
+  '                a[j + 1] = t;',
+  '                swapped = true;',
+  '            }',
+  '        }',
+  '        if (!swapped) break;                   // a pass with no swap → already sorted',
+  '    }',
+  '}'
+];
+const LN = { outer: 1, flag: 2, inner: 3, cmp: 4, swap: 5, swapB: 7, flagSet: 8, checkFlag: 11, end: 13 };
+
+function buildFrames(modeKey) {
+  const M = MODES[modeKey], n = M.arr.length;
+  const a = M.arr.slice();
+  const frames = [];
+  let i = -1, j = -1, compares = 0, swaps = 0, swThisPass = 0, sortedFrom = n, phase = 'intro';
+  let pair = null, swapping = false, passRows = [], early = false, finished = false;
+
+  function snap(msg, line) {
+    frames.push({
+      msg: msg, line: line, phase: phase, done: false, arr: a.slice(), i: i, j: j,
+      compares: compares, swaps: swaps, sortedFrom: sortedFrom, pair: pair ? pair.slice() : null,
+      swapping: swapping, rows: passRows.map(r => ({ label: r.label, compares: r.compares, swaps: r.swaps, arr: r.arr.slice(), early: r.early })),
+      early: early, finished: finished
+    });
+  }
+  const g = (function* () {
+    snap('Task: sort the array <code>[' + M.arr.join(', ') + ']</code> into ascending order with <b>bubble sort</b>.', -1);
+    snap('The idea: walk left to right <b>comparing neighbours</b> a[j] and a[j+1]; when the left one is larger (out of order), <b>swap</b> them. By the end of a pass the largest element has bubbled to the end of the unsorted part.', -1);
+
+    for (i = 0; i < n - 1; i++) {
+      phase = 'pass-start';
+      swThisPass = 0;
+      pair = null; swapping = false;
+      sortedFrom = n - i;                 // the last i elements are settled
+      snap('Pass <b>' + (i + 1) + '</b> begins: the last ' + i + ' element(s) are settled (' + (i ? a.slice(n - i).join(', ') : 'none yet') + '), so this pass only compares <code>j = 0 … ' + (n - 2 - i) + '</code>; first set <code>swapped = false</code>.', LN.flag);
+
+      phase = 'loop';
+      let swThis = 0;
+      for (j = 0; j < n - 1 - i; j++) {
+        pair = [j, j + 1]; swapping = false;
+        compares++;
+        const x = a[j], y = a[j + 1];
+        snap('Compare <code>a[' + j + '] = ' + x + '</code> with <code>a[' + (j + 1) + '] = ' + y + '</code>:' + (x > y ? ' <b>' + x + ' &gt; ' + y + '</b> → out of order, swap them' : ' ' + x + ' &lt; ' + y + ' → already in order, leave it'), LN.cmp);
+        if (x > y) {
+          const t = a[j]; a[j] = a[j + 1]; a[j + 1] = t;   // mutate first, then take the frame
+          swaps++; swThis++; swThisPass++;
+          swapping = true;
+          snap('Swap executed: <code>a[' + j + ']</code> and <code>a[' + (j + 1) + ']</code> are exchanged → <code>' + x + ', ' + y + '</code> becomes <code>' + y + ', ' + x + '</code> (swap #' + swaps + ')', LN.swap);
+        }
+      }
+      pair = null; swapping = false;
+      sortedFrom = n - 1 - i;             // this pass's maximum is pinned here
+      const fixedVal = a[sortedFrom];
+      passRows.push({ label: 'Pass ' + (i + 1), compares: n - 1 - i, swaps: swThis, arr: a.slice(), early: swThis === 0 });
+      if (swThis === 0) {
+        early = true;
+        phase = 'early';
+        snap('Pass ' + (i + 1) + ' finished: ' + (n - 1 - i) + ' comparisons and <b>0 swaps</b> → every neighbouring pair is already in order, so the whole array is sorted → <code>if (!swapped) break;</code> <b>stops early</b>! <span class="badge">best case O(n)</span>', LN.checkFlag);
+        break;
+      }
+      phase = 'pass-end';
+      snap('Pass ' + (i + 1) + ' finished: ' + (n - 1 - i) + ' comparisons, <b>' + swThis + '</b> swap(s). This pass&rsquo;s maximum <b>' + fixedVal + '</b> bubbled to position <code>' + sortedFrom + '</code>, and everything after it is larger or equal → position ' + sortedFrom + ' and beyond are settled for good.', LN.outer);
+    }
+
+    phase = 'done'; finished = true;
+    sortedFrom = 0;
+    snap('✔ Sorted: <b>[' + a.join(', ') + ']</b> (ascending).<br>📌 <b>' + (i + 1) + '</b> pass(es) · <b>' + compares + '</b> comparisons · <b>' + swaps + '</b> swaps' + (early ? ' · <b>stopped early</b> because one pass swapped nothing' : '') + '.<br>💡 The comparison bound is (n−1)+(n−2)+…+1 = n(n−1)/2 → time <b>O(n²)</b>, space O(1); it only swaps neighbours and never swaps equals → a <b>stable</b> sort.<br>🔁 Compare: an already sorted array needs only ' + (n - 1) + ' comparisons (O(n)), while a reversed one hits the maximum ' + ((n * (n - 1)) / 2) + ' comparisons and swaps.', -1);
+    frames[frames.length - 1].done = true;
+  })();
+  for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = { a: buildFrames('a'), b: buildFrames('b'), c: buildFrames('c') };
+/*%%LOGIC_END%%*/
+
+let mode = 'a', frames = CACHE[mode], idx = 0;
+let playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+
+function renderArr(f) {
+  const row = $('#arrRow'); row.innerHTML = '';
+  const M = MODES[mode], n = f.arr.length;
+  f.arr.forEach((v, k) => {
+    const d = document.createElement('div');
+    let cls = 'cell';
+    const isPair = f.pair && f.pair.indexOf(k) >= 0;
+    if (isPair) cls += f.swapping ? ' swapping' : ' pair';
+    else if (k >= f.sortedFrom) cls += ' sorted';
+    d.className = cls;
+    let mark = '';
+    if (isPair) mark = f.swapping ? '⇄' : (f.pair[0] === k ? '↑ j' : '↑ j+1');
+    else if (k >= f.sortedFrom) mark = '✓';
+    d.innerHTML = '<div class="ix">' + k + '</div><div class="val">' + v + '</div><div class="mark">' + mark + '</div>';
+    row.appendChild(d);
+  });
+}
+function renderTrace(f) {
+  const body = $('#traceBody'); body.innerHTML = '';
+  f.rows.forEach((r, k) => {
+    const tr = document.createElement('tr');
+    tr.className = r.early ? 'done' : ((k === f.rows.length - 1 && f.phase === 'loop') ? 'cur' : '');
+    tr.innerHTML = '<td>' + r.label + '</td><td>' + r.compares + '</td><td>' + r.swaps + '</td><td>[' + r.arr.join(', ') + ']</td>' +
+      '<td class="note">' + (r.early ? '<span class="y">0 swaps → already sorted, break</span>' : 'the maximum bubbled to the end; the last ' + (k + 1) + ' position(s) settled') + '</td>';
+    body.appendChild(tr);
+  });
+  if (!f.rows.length) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td colspan="5" class="note">(the first pass is still running)</td>';
+    body.appendChild(tr);
+  }
+  $('#traceTag').textContent = f.rows.length + ' pass(es) recorded';
+}
+function renderAnswer(f) {
+  const M = MODES[mode], n = f.arr.length;
+  $('#statI').textContent = f.i >= 0 ? String(f.i + 1) : '—';
+  $('#statCmp').textContent = String(f.compares);
+  $('#statSwp').textContent = String(f.swaps);
+  $('#statDone').textContent = String(Math.min(n, Math.max(0, n - f.sortedFrom)));
+  $('#statN').textContent = String(n);
+  const box = $('#answerBox');
+  if (f.finished) {
+    $('#ret').textContent = '[' + f.arr.join(', ') + ']';
+    $('#retSub').innerHTML = 'sorted ascending · ' + f.compares + ' comparisons / ' + f.swaps + ' swaps' + (f.early ? ' <span class="badge">stopped early</span>' : '');
+    box.style.borderColor = 'var(--green)';
+  } else {
+    $('#ret').textContent = '(not finished yet)';
+    $('#retSub').textContent = Math.max(0, n - f.sortedFrom) + ' value(s) settled (at the end)';
+  }
+}
+function renderSteps(f) {
+  document.querySelectorAll('#stepList .st').forEach(el => {
+    const k = el.dataset.step;
+    const cur = (k === '1' && f.phase === 'loop') || (k === '2' && f.swapping) || (k === '3' && f.phase === 'pass-end') || (k === '4' && f.phase === 'early');
+    const done = k === '1' ? f.compares > 0 : (k === '2' ? f.swaps > 0 : (k === '3' ? f.sortedFrom < f.arr.length : !!f.early));
+    el.className = 'st' + (done ? ' done' : (cur ? ' cur' : ''));
+  });
+}
+function renderCode(f) {
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = 'n = ' + f.arr.length;
+  CODE.forEach((txt, k) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === k ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = k + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx);
+    box.appendChild(row);
+  });
+  if (f.line >= 0) { const rows = box.querySelectorAll('.coderow'); if (rows[f.line]) box.scrollTop = Math.max(0, rows[f.line].offsetTop - box.clientHeight / 2); }
+}
+function render() {
+  const f = frames[idx];
+  renderArr(f); renderTrace(f); renderAnswer(f); renderSteps(f); renderCode(f);
+  const d = $('#desc');
+  d.className = 'desc' + (f.finished ? ' done' : '');
+  d.innerHTML = f.msg;
+  $('#phaseTag').textContent = f.phase === 'intro' ? 'task & idea' : f.phase === 'pass-start' ? 'pass ' + (f.i + 1) + ' begins' : f.phase === 'loop' ? 'pass ' + (f.i + 1) + ' · comparing j = ' + f.j : f.phase === 'pass-end' ? 'pass ' + (f.i + 1) + ' finished' : f.phase === 'early' ? '0 swaps → stop early' : 'done ✔';
+  const M = MODES[mode];
+  $('#modeTag').textContent = '[' + M.arr.join(', ') + ']';
+  $('#chapter').textContent = 'Sort [' + M.arr.join(', ') + '] into ascending order with bubble sort — compare neighbours, swap when out of order, one maximum bubbles out per pass' + (M.ref.early ? ' (this input stops early thanks to the swapped flag)' : '');
+  $('#stepText').innerHTML = 'Step <b>' + (idx + 1) + '</b> / ' + frames.length + ' · ' + f.compares + ' compared / ' + f.swaps + ' swapped';
+  $('#seek').max = frames.length - 1;
+  $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0;
+  $('#bNext').disabled = idx >= frames.length - 1;
+  $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false); render();
+}
+$('#modes').addEventListener('click', e => { const b = e.target.closest('.mode-pill'); if (b) setMode(b.dataset.mode); });
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 600);
+</script>
+</body>
+</html>

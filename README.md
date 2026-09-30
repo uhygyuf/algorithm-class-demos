@@ -26,6 +26,7 @@ network required. Open any file in a browser and it runs.
 | `queue-clinic.html` | Question 2 — Queue application: clinic waiting line | The week-4 exercise: `std::queue<std::string>` driven by three commands — `ARRIVE <name>` enqueues at the rear, `CALL` dequeues the front and prints `Now serving: …`, `SHOW` peeks at the front without touching the queue — and an empty queue makes both `CALL` and `SHOW` print `No patients waiting`. Three command sequences (including an "empty first" and a "busy stretch" run) drive the queue, a live cout console and the code highlight in step. |
 | `linear-search.html` | Exercise 1 (a) — Linear search | The courseware exercise: find `27` in `[10, 5, 18, 27, 32, 40, 3, 9]`. The index pointer walks right one cell at a time while every element is marked comparing / already compared / found, and a comparison log builds up next to it (`DataSet[k] = v` versus `id`) until the green `return` box answers. Three runs: `27` (4th comparison hits → `return 3`), the absent `41` (all 8 compared → `return -1`) and the last element `9` (worst case). |
 | `binary-search.html` | Exercise 1 (b) — Binary search | The courseware exercise: locate `45` in the sorted 16-element array. The array highlights the live `[left, right]` window, greys out eliminated cells and pulses the `pos` cell each round, and the panel reproduces the slide's own trace table (`Loop / left / right / pos / DataSet[pos] / Found / comment`) row by row — the Pre-loop row and Loops 1–4 match the slide exactly. Three runs: `45` (pos 7→11→13→14 → `return 14`), `27` (hit on round one) and the absent `43` (window collapses → `return -1`). |
+| `bubble-sort.html` | Sorting — Bubble sort | Neighbour comparison with swaps: every frame touches exactly one adjacent pair (amber = being compared, violet ⇄ = just swapped), the settle tail grows by one green cell per pass, and a pass-by-pass record table (pass / comparisons / swaps / array after the pass / note) fills in as it runs. The `swapped` early-exit flag is included, with three runs: a typical case of 6 numbers (12 comparisons, 5 swaps, pass 3 swaps nothing → stops early), an already sorted array (1 pass, 4 comparisons, 0 swaps → `break`, best case O(n)) and a reversed array (5 passes, 15 comparisons, 15 swaps, worst case O(n²)). |
 
 Sample data matches the lecture slides: the complete binary tree 1–7, the
 15→25→35… probing sequence, the apple/banana/orange map, and the BST built from
@@ -66,6 +67,7 @@ palindrome-stack.html       question 1: stack — palindrome checker
 queue-clinic.html           question 2: queue — clinic waiting line simulator
 linear-search.html          exercise 1 (a): linear search
 binary-search.html          exercise 1 (b): binary search
+bubble-sort.html            sorting: bubble sort
 ```
 
 A Chinese-language edition of these demos exists separately for classroom use.
