@@ -27,6 +27,13 @@ network required. Open any file in a browser and it runs.
 | `linear-search.html` | Exercise 1 (a) — Linear search | The courseware exercise: find `27` in `[10, 5, 18, 27, 32, 40, 3, 9]`. The index pointer walks right one cell at a time while every element is marked comparing / already compared / found, and a comparison log builds up next to it (`DataSet[k] = v` versus `id`) until the green `return` box answers. Three runs: `27` (4th comparison hits → `return 3`), the absent `41` (all 8 compared → `return -1`) and the last element `9` (worst case). |
 | `binary-search.html` | Exercise 1 (b) — Binary search | The courseware exercise: locate `45` in the sorted 16-element array. The array highlights the live `[left, right]` window, greys out eliminated cells and pulses the `pos` cell each round, and the panel reproduces the slide's own trace table (`Loop / left / right / pos / DataSet[pos] / Found / comment`) row by row — the Pre-loop row and Loops 1–4 match the slide exactly. Three runs: `45` (pos 7→11→13→14 → `return 14`), `27` (hit on round one) and the absent `43` (window collapses → `return -1`). |
 | `bubble-sort.html` | Sorting — Bubble sort | Neighbour comparison with swaps: every frame touches exactly one adjacent pair (amber = being compared, violet ⇄ = just swapped), the settle tail grows by one green cell per pass, and a pass-by-pass record table (pass / comparisons / swaps / array after the pass / note) fills in as it runs. The `swapped` early-exit flag is included, with three runs: a typical case of 6 numbers (12 comparisons, 5 swaps, pass 3 swaps nothing → stops early), an already sorted array (1 pass, 4 comparisons, 0 swaps → `break`, best case O(n)) and a reversed array (5 passes, 15 comparisons, 15 swaps, worst case O(n²)). |
+| `insertion-sort.html` | Sorting — Insertion sort | The card-in-hand picture: lift `key = a[i]`, shift every larger value of the sorted prefix one slot right (the dashed cell is the gap), then drop the key in. Each frame shows the key card, the gap and the sorted prefix, with a per-pass record table and three runs (typical / already sorted → 1 comparison and 0 shifts per pass / reversed). |
+| `shell-sort.html` | Sorting — Shell sort (halving gaps) | Gap sequence n/2 → … → 1: every pass insertion sorts the subsequences of stride `gap` (same-subsequence members boxed, the stride is on show), and each pass ends by stating that every stride-`gap` subsequence is sorted. The classic 10-number example (119 frames), a 6-number run and an already sorted run. |
+| `quick-sort.html` | Sorting — Quicksort (Lomuto partition) | Last element of the range as pivot → `j` scans and moves smaller values to `i` → swapping the pivot with `i` settles it for good (green). A pending-ranges stack panel and a per-partition record table sit alongside. Three runs: typical / already sorted (**worst case O(n²)**, 40 frames) / reversed. |
+| `selection-sort.html` | Sorting — Selection sort | Each pass scans the unsorted part for its minimum (the `min` card updates live) and then swaps **once**. The stats call out that comparisons are always n(n−1)/2 while swaps are at most n−1. Three runs: typical / already sorted (0 swaps) / reversed. |
+| `heap-sort.html` | Sorting — Heap sort | The array and **the heap drawn as a tree** side by side (index k ↔ node k, parent/child edges drawn). The build phase sifts down bottom-up (parent and children highlighted); the extract phase swaps the maximum to the end and shrinks the heap. Every frame is checked against the max-heap property plus the settled tail. |
+| `merge-sort.html` | Sorting — Merge sort (bottom-up) | Width 1→2→4…: neighbouring runs meet with two pointers, an **auxiliary row** shows both runs with the i/j pointers, and the smaller value is written back to k. A per-round record table tracks each width; three runs show that sorted and reversed input cost almost the same (the count does not depend on the input order). |
+| `radix-sort.html` | Sorting — Radix sort (LSD) | Ten buckets in a row: distribute by the current digit (the digit being sorted on is underlined inside each number), then pour buckets 0→9 back into the array, and each pass ends by stating that the array is sorted by its last k digits. Three runs: the classic 8 numbers (98 frames), 6 numbers with three-digit keys, and single digits (one pass). |
 
 Sample data matches the lecture slides: the complete binary tree 1–7, the
 15→25→35… probing sequence, the apple/banana/orange map, and the BST built from
@@ -68,6 +75,13 @@ queue-clinic.html           question 2: queue — clinic waiting line simulator
 linear-search.html          exercise 1 (a): linear search
 binary-search.html          exercise 1 (b): binary search
 bubble-sort.html            sorting: bubble sort
+insertion-sort.html         sorting: insertion sort
+shell-sort.html             sorting: shell sort
+quick-sort.html             sorting: quicksort (Lomuto)
+selection-sort.html         sorting: selection sort
+heap-sort.html              sorting: heap sort
+merge-sort.html             sorting: merge sort (bottom-up)
+radix-sort.html             sorting: radix sort (LSD)
 ```
 
 A Chinese-language edition of these demos exists separately for classroom use.

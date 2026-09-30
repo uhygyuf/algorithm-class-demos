@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heap Sort</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --red:#d64545; --red-pale:#fdeaea;
+    --violet:#8e44ad; --violet-pale:#f3e8fa;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+  .grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.92fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  .cellrow{display:flex;gap:6px;flex-wrap:wrap;padding:4px 2px 0;align-items:flex-end}
+  .cell{min-width:52px;text-align:center;transition:transform .18s}
+  .cell .ix{font-size:10.5px;color:#9aa9b9;font-family:Consolas,monospace;background:#eef3f9;border:1px solid #dde5ee;border-bottom:none;border-radius:6px 6px 0 0;padding:2px 0}
+  .cell .val{font-family:Consolas,monospace;font-size:18px;font-weight:700;padding:8px 4px;border:1.5px solid #a9bdd4;border-radius:0 0 6px 6px;background:#fff;color:var(--ink)}
+  .cell.sorted .ix{background:#e8f3ec;color:#7fae94}
+  .cell.sorted .val{background:var(--green-pale);border-color:var(--green);color:var(--green-d)}
+  .cell.pair .ix{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .cell.pair .val{background:var(--amber-pale);border-color:var(--amber);color:#92400e;animation:pulse 1s infinite}
+  .cell.swapping .ix{background:var(--violet);color:#fff;border-color:var(--violet)}
+  .cell.swapping .val{background:var(--violet-pale);border-color:var(--violet);color:#5b2c6f}
+  .cell .mark{font-size:10.5px;font-weight:700;height:15px;color:#c3ccd6;font-family:Consolas,monospace}
+  .cell.pair .mark{color:#c47f12}
+  .cell.swapping .mark{color:var(--violet)}
+  .cell.sorted .mark{color:var(--green)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .statrow{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:8px}
+  .statrow b{color:var(--blue-d);font-family:Consolas,monospace;font-size:14px}
+
+  .answerbox{margin-top:9px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:48px}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .ret{font-family:Consolas,monospace;font-size:16px;font-weight:700;color:var(--green-d)}
+  .ret-sub{font-size:12.5px;color:var(--ink-2)}
+  .badge{display:inline-block;background:var(--violet-pale);color:#5b2c6f;border:1px solid var(--violet);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600}
+
+  .trace{width:100%;border-collapse:collapse;font-size:12px}
+  .trace th{background:#eef3f9;color:var(--ink-2);font-weight:600;padding:4px 6px;border:1px solid var(--line);font-size:11.5px}
+  .trace td{padding:3.5px 6px;border:1px solid var(--line);text-align:center;font-family:Consolas,monospace}
+  .trace td.note{text-align:left;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:11.5px}
+  .trace tr.cur{background:var(--amber-pale)}
+  .trace tr.done{background:var(--green-pale)}
+  .trace .y{color:var(--green-d);font-weight:700}
+
+  .steplist{display:flex;flex-direction:column;gap:5px;font-size:13px}
+  .steplist .st{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:8px;background:#f8fafc;border-left:4px solid #c9d6e4}
+  .steplist .st.cur{border-left-color:var(--amber);background:var(--amber-pale)}
+  .steplist .st.done{border-left-color:var(--green);background:var(--green-pale)}
+  .steplist .st b{color:var(--blue-d)}
+  .steplist .st .no{width:18px;height:18px;flex:none;border-radius:50%;background:#e3e9f0;color:#9aa9b9;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .steplist .st.done .no{background:var(--green);color:#fff}
+  .steplist .st.cur .no{background:var(--amber);color:#fff}
+  .idea{font-size:12.5px;line-height:1.75;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--violet-pale);border-left:4px solid var(--violet)}
+  .idea b{color:#5b2c6f}
+  .idea code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.5px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:52vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc code{background:#fff;padding:0 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,168,58,.5)}50%{box-shadow:0 0 0 6px rgba(240,168,58,0)}}
+
+  /* ---- shared sort-demo extensions ---- */
+  .cell.hole .val{border-style:dashed;border-color:#c3ccd6;background:repeating-linear-gradient(45deg,#f7f9fb,#f7f9fb 6px,#eef2f7 6px,#eef2f7 12px);color:#b9c4cf}
+  .cell.keycell .val{background:#fff3d6;border-color:#f0a83a;color:#92400e}
+  .cell.min .ix{background:var(--violet);color:#fff;border-color:var(--violet)}
+  .cell.min .val{background:var(--violet-pale);border-color:var(--violet);color:#5b2c6f}
+  .cell.scan .ix{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .cell.scan .val{background:var(--amber-pale);border-color:var(--amber);color:#92400e}
+  .cell.bound .val{box-shadow:inset 0 0 0 2px var(--blue)}
+  .keybar{display:flex;align-items:center;gap:10px;margin:8px 0 2px;min-height:42px}
+  .keycard{border:2px solid var(--amber);background:var(--amber-pale);border-radius:9px;padding:4px 12px;font-family:Consolas,monospace;font-size:16px;font-weight:700;color:#92400e;white-space:nowrap}
+  .keycard.empty{border-style:dashed;border-color:#c3ccd6;background:#f7f9fb;color:#b9c4cf;font-weight:400;font-size:13px}
+  .keylbl{font-size:12px;color:var(--ink-2);white-space:nowrap}
+  .heapwrap{display:flex;justify-content:center;overflow:auto}
+  .auxrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .auxcell{min-width:40px;text-align:center;font-family:Consolas,monospace;font-size:14px;border:1.5px solid #a9bdd4;border-radius:6px;padding:5px 3px;background:#fff}
+  .auxcell.done{background:#f6f8fa;border-color:#dce3ea;color:#9aa9b9}
+  .auxcell.cur{background:var(--amber-pale);border-color:var(--amber);color:#92400e;font-weight:700}
+  .bucketwrap{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+  .bucket{flex:1;min-width:52px;border:1.5px solid var(--line);border-radius:8px;background:#f8fafc;padding:4px 3px;text-align:center}
+  .bucket.active{border-color:var(--violet);background:var(--violet-pale)}
+  .bucket .bl{font-size:10.5px;color:var(--ink-2);border-bottom:1px dashed var(--line);padding-bottom:2px;margin-bottom:3px;font-family:Consolas,monospace}
+  .bucket .bi{font-family:Consolas,monospace;font-size:12.5px;color:var(--blue-d);line-height:1.5}
+  .bucket .bi.new{color:var(--amber);font-weight:700}
+  .stackbox{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .stackitem{border:1.5px solid #a9bdd4;border-radius:7px;background:#fff;padding:2px 9px;font-family:Consolas,monospace;font-size:12px;color:var(--ink-2)}
+  .stackitem.cur{border-color:var(--amber);background:var(--amber-pale);color:#92400e;font-weight:700}
+  .stackitem.done{border-color:var(--green);background:var(--green-pale);color:var(--green-d)}
+  .segbar{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--ink-2);font-family:Consolas,monospace}
+  .segbar .seg{border:1.5px dashed #a9bdd4;border-radius:6px;padding:1px 7px;background:#fff}
+  .segbar .seg.on{border-color:var(--amber);background:var(--amber-pale);color:#92400e;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">Data Structures · Sorting</div>
+    <h1>Heap Sort</h1>
+    <div class="chapter" id="chapter"></div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. A typical case: 6 shuffled numbers<small>4, 10, 3, 5, 1, 2</small></button>
+      <button class="mode-pill" data-mode="b">2. Already sorted<small>the heap still gets rebuilt</small></button>
+      <button class="mode-pill" data-mode="c">3. Fully reversed<small>the build phase works hardest</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+      <a href="fib-recursion.html">9. Fibonacci recursion</a>
+      <a href="stack-reverse.html">10. Reverse a string with a stack</a>
+      <a href="queue-reverse-k.html">11. Reverse the first K of a queue</a>
+      <a href="undo-stack.html">12. Stack · editor Undo</a>
+      <a href="palindrome-stack.html">13. Stack · palindrome checker</a>
+      <a href="queue-clinic.html">14. Queue · clinic line</a>
+      <a href="linear-search.html">15. Linear search</a>
+      <a href="binary-search.html">16. Binary search</a>
+      <a href="bubble-sort.html">17. Bubble sort</a>
+      <a href="insertion-sort.html">18. Insertion sort</a>
+      <a href="shell-sort.html">19. Shell sort</a>
+      <a href="quick-sort.html">20. Quick sort</a>
+      <a href="selection-sort.html">21. Selection sort</a>
+      <a href="heap-sort.html" class="on">22. Heap sort</a>
+      <a href="merge-sort.html">23. Merge sort</a>
+      <a href="radix-sort.html">24. Radix sort</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>🔢 The array a[] and the heap tree (index k ↔ node k) <span class="tag" id="modeTag"></span></h3>
+        <div id="stage"></div>
+        <div class="legend"><span><span class="dot" style="background:#fff;border:1.5px solid #a9bdd4"></span>node inside the heap</span><span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>node sifting down / its children</span><span><span class="dot" style="background:#f3e8fa;border:1px solid #8e44ad"></span>being swapped</span><span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>settled (at the end)</span></div>
+        <div class="statrow" id="statRow"></div>
+        <div class="answerbox" id="answerBox">
+          <span class="alabel">result</span><span class="ret" id="ret"></span><span class="ret-sub" id="retSub"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🧾 Phase statistics <span class="tag" id="traceTag"></span></h3>
+        <table class="trace"><thead></thead><tbody id="traceBody"></tbody></table>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current step <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 The algorithm (courseware-style C++) <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow = the line being executed. <b>The recipe</b>: build the heap (sift down bottom-up) → swap the root to the end → shrink the heap → sift the root down again → repeat.</div>
+      </div>
+      <div class="card">
+        <h3>📄 Key points</h3>
+        <div class="steplist" id="stepList">
+        <div class="st" data-step="1"><span class="no">1</span><span><b>Build</b>: sift down every node from <code>n/2 − 1</code> backwards</span></div>
+        <div class="st" data-step="2"><span class="no">2</span><span><b>Extract</b>: <code>swap(a[0], a[end])</code> → the maximum is settled</span></div>
+        <div class="st" data-step="3"><span class="no">3</span><span>Shrink the heap by one and sift the new root down</span></div>
+        <div class="st" data-step="4"><span class="no">4</span><span>Always O(n log n), O(1) space, but not stable</span></div>
+        </div>
+        <div class="idea"><b>The array is the tree:</b> index k has left child <code>2k+1</code>, right child <code>2k+2</code> and parent <code>(k−1)/2</code> — no pointers needed, the indices do the work.<br><b>Why is building O(n)?</b> Most nodes sit near the bottom where the sift distance is tiny (leaves travel 0 levels, the level above at most 1, …); the sum works out to O(n), not O(n log n).<br><b>The sorting phase:</b> n−1 rounds of &ldquo;extract + sift down&rdquo;, each O(log n) → <b>O(n log n)</b> regardless of the input order.<br><b>Versus others:</b> quicksort is faster on average but O(n²) in the worst case; merge sort is also O(n log n) but needs O(n) extra space; heap sort is the one that is <b>always O(n log n) with O(1) space</b>. It shines for Top-K, priority queues and anything needing a worst-case guarantee.<br><b>Max-heap ↔ ascending:</b> for ascending output you want a max-heap (each round throws the maximum to the end).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="⏮ Reset (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="◀ Back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="▶ Play (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Next ▶ (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="⏭ Result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+const T = {
+ "intro1": "Task: sort <code>[{0}]</code> into ascending order with <b>heap sort</b>.",
+ "intro2": "Two steps: (1) <b>build a heap</b> — read the array as a complete binary tree (index k has children 2k+1 and 2k+2) and, from the last non-leaf node backwards, <b>sift down</b> so every parent is ≥ its children → a max-heap. (2) <b>take the top</b> — the root is the maximum; swap it with the last slot (the maximum is now home), shrink the heap by one, sift the new root down, and repeat until one element remains.",
+ "buildStart": "Step one: build the max-heap. Start at the last non-leaf node <code>i = n/2 - 1 = {0}</code> and sift down each node, working backwards (leaves are heaps already)",
+ "buildAt": "Sift down node <code>i = {0}</code> (value {1}): compare it with its larger child and swap down while it is smaller",
+ "siftCmp": "Node a[{0}] = {1}: left child {2}, right child {3} → the larger child is <b>{4}</b>",
+ "noChildPl": "(none)",
+ "siftLeft": "left child",
+ "siftRight": "right child",
+ "siftStopBig": "the parent itself (no swap)",
+ "bigChild": "{0} a[{1}] = {2}",
+ "siftStop": "a[{0}] = {1} is not smaller than its child → <b>the max-heap property holds</b>, stop",
+ "siftSwap": "Swap a[{0}] = {2} with a[{1}] = {3}: the larger value rises and we continue from position {1}",
+ "buildDone": "Node {0} is done; its subtree is a max-heap now",
+ "heapReady": "✔ <b>The max-heap is built</b>: every parent is ≥ its children, so <b>a[0] is the maximum of the whole array</b> and stays at the root.",
+ "extractTop": "Take the maximum: swap the root a[0] = <b>{0}</b> with the heap's last element a[{2}] = {1} → the maximum lands at index {2}",
+ "extractSwapped": "Swapped: a[{1}] = {0} is settled (the green part grows); the root now holds the smaller value a[0] = {2} and must be sifted down again",
+ "siftRoot": "Sift down the root (index 0, heap size {1})",
+ "extractDone": "Index {0} and beyond are settled; the remaining heap is <code>{1}</code>",
+ "done": "✔ Sorted: <b>[{0}]</b> (ascending).<br>📌 <b>{1}</b> comparisons · <b>{2}</b> swaps.<br>💡 Heap sort = <b>build the heap in O(n) + n extractions at O(log n) each</b> → time is always <b>O(n log n)</b> (best, worst and average alike, on the order of {3} comparisons) with <b>O(1)</b> space — its big advantage over quicksort, whose worst case degrades to O(n²). Downsides: the jumps between indices are cache-unfriendly, and it is <b>not stable</b>.",
+ "stPhase": "phase <b>{0}</b>",
+ "rowBuildDone": "max-heap built",
+ "rowExtract": "extract the maximum into {0}",
+ "stCmp": "comparisons <b>{0}</b>",
+ "stSwp": "swaps <b>{0}</b>",
+ "stSorted": "settled <b>{0}</b> / {1}",
+ "tail": " · {0} compared / {1} swapped",
+ "doneSub": "{0} comparisons · {1} swaps",
+ "retSubWait": "build the max-heap, then repeatedly take the top",
+ "mkChild": "child",
+ "phase": {
+  "intro": "task & idea",
+  "build": "building the heap",
+  "heapOk": "the heap property holds",
+  "extract": "extract & sift",
+  "sift": "sifting down",
+  "done": "done ✔"
+ },
+ "codeTag": "n = {0} {1}",
+ "modeTag": "[{0}]",
+ "chapter": "Heap sort — the array is a complete binary tree: build a max-heap bottom-up, then repeatedly swap the root (the maximum) to the end and shrink the heap; always O(n log n)",
+ "traceHead": [
+  "Phase",
+  "Comparisons",
+  "Swaps",
+  "Array so far"
+ ],
+ "traceEmpty": "(no record yet)",
+ "traceTag": "{0} row(s)",
+ "stepText": "Step <b>{0}</b> / {1}",
+ "pause": "⏸ Pause",
+ "play": "▶ Play"
+};
+/*%%LOGIC_BEGIN%%*/
+const PRESETS = {
+  a: { arr: [4, 10, 3, 5, 1, 2] },
+  b: { arr: [1, 2, 3, 4, 5, 6] },
+  c: { arr: [6, 5, 4, 3, 2, 1] }
+};
+// // independent reference (build the max-heap, then extract one by one; comparison = every child test, swap = every real exchange)
+function siftDown(a, root, size, c) {
+  while (true) {
+    const l = 2 * root + 1, r = 2 * root + 2; let big = root;
+    if (l < size) { c.cmp++; if (a[l] > a[big]) big = l; }
+    if (r < size) { c.cmp++; if (a[r] > a[big]) big = r; }
+    if (big === root) break;
+    const t = a[root]; a[root] = a[big]; a[big] = t; c.swp++;
+    root = big;
+  }
+}
+function refHeap(input) {
+  const a = input.slice(), n = a.length, c = { cmp: 0, swp: 0 }, rows = [];
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) siftDown(a, i, n, c);
+  for (let end = n - 1; end > 0; end--) {
+    const t = a[0]; a[0] = a[end]; a[end] = t; c.swp++;
+    siftDown(a, 0, end, c);
+  }
+  return { arr: a, cmp: c.cmp, swp: c.swp, rows: rows };
+}
+for (const k in PRESETS) PRESETS[k].ref = refHeap(PRESETS[k].arr);
+const CODE = [
+  'void heapSort(int a[], int n) {',
+  '    for (int i = n / 2 - 1; i >= 0; i--)      // build from the last non-leaf node',
+  '        siftDown(a, i, n);                   // sift down: swap with a larger child',
+  '    for (int end = n - 1; end > 0; end--) {  // move the root (the maximum) to the end',
+  '        swap(a[0], a[end]);                  // the maximum is settled',
+  '        siftDown(a, 0, end);                 // shrink the heap by one and sift the new root',
+  '    }',
+  '}',
+  'void siftDown(int a[], int root, int size) {',
+  '    while (true) {',
+  '        int l = 2 * root + 1, r = 2 * root + 2;',
+  '        int big = root;',
+  '        if (l < size && a[l] > a[big]) big = l;   // find the larger child',
+  '        if (r < size && a[r] > a[big]) big = r;',
+  '        if (big == root) break;                   // larger than its children → stop',
+  '        swap(a[root], a[big]);',
+  '        root = big;',
+  '    }',
+  '}'
+];
+const LN = { buildLoop: 1, buildCall: 2, extract: 3, swapTop: 4, siftCall: 5, siftL: 11, siftStop: 13 };
+
+function buildFrames(mk) {
+  const M = PRESETS[mk], n = M.arr.length, a = M.arr.slice(), frames = [], rows = [];
+  let cmp = 0, swp = 0, phase = 'intro', size = n, root = -1, big = -1, l = -1, r = -1, swapping = false;
+  const sortedTail = [];
+  function snap(msg, line, extra) {
+    frames.push(Object.assign({
+      msg: msg, line: line, phase: phase, done: false, bad: false,
+      tail: F(T.tail, cmp, swp),
+      rows: rows.map(r => ({ label: r.label, cols: r.cols.slice() })),
+      stats: [F(T.stPhase, T.phase[phase] || phase), F(T.stCmp, cmp), F(T.stSwp, swp), F(T.stSorted, sortedTail.length, n)],
+      stepStates: {
+        '1': (phase === 'build' ? 'cur' : (phase === 'extract' || phase === 'done' ? 'done' : '')),
+        '2': (phase === 'extract' ? 'cur' : (phase === 'done' ? 'done' : '')),
+        '3': (sortedTail.length > 0 ? 'done' : ''),
+        '4': (phase === 'done' ? 'done' : '')
+      },
+      ret: '[' + a.join(', ') + ']', retSub: T.retSubWait,
+      view: { n: n, arr: a.slice(), size: size, root: root, big: big, l: l, r: r, swapping: swapping,
+              sortedTail: sortedTail.slice(), phase: phase, cmp: cmp, swp: swp, extra: '' }
+    }, extra || {}));
+  }
+  // the same siftDown as the reference, unrolled frame by frame
+  function* sift(root0, size0) {
+    let rt = root0, sz = size0;
+    while (true) {
+      const L = 2 * rt + 1, R = 2 * rt + 2; let bg = rt;
+      l = L; r = R; root = rt; big = rt;
+      if (L < sz) { cmp++; if (a[L] > a[bg]) big = bg = L; }
+      if (R < sz) { cmp++; if (a[R] > a[bg]) big = bg = R; }
+      const bigTxt = (bg === rt) ? T.siftStopBig : F(T.bigChild, (bg === L ? T.siftLeft : T.siftRight), bg, a[bg]);
+      snap(F(T.siftCmp, rt, a[rt], (L < sz ? 'a[' + L + '] = ' + a[L] : T.noChildPl), (R < sz ? 'a[' + R + '] = ' + a[R] : T.noChildPl), bigTxt), LN.siftL);
+      if (big === rt) { snap(F(T.siftStop, rt, a[rt]), LN.siftStop); break; }
+      swapping = true; swp++;
+      const t = a[rt]; a[rt] = a[big]; a[big] = t;
+      snap(F(T.siftSwap, rt, big, a[rt], a[big]), LN.siftCall);
+      swapping = false;
+      rt = big;
+    }
+    root = -1; big = -1; l = -1; r = -1;
+  }
+  const g = (function* () {
+    snap(F(T.intro1, a.join(', ')), -1);
+    snap(T.intro2, -1);
+    phase = 'build'; size = n;
+    snap(F(T.buildStart, Math.floor(n / 2) - 1), LN.buildLoop);
+    for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+      snap(F(T.buildAt, i, a[i]), LN.buildCall);
+      yield* sift(i, n);
+      snap(F(T.buildDone, i), -1);
+    }
+    phase = 'heapOk';
+    rows.push({ label: T.rowBuildDone, cols: [String(cmp), String(swp), '[' + a.join(', ') + ']'] });
+    snap(T.heapReady, -1);
+    phase = 'extract';
+    for (let end = n - 1; end > 0; end--) {
+      size = end;
+      snap(F(T.extractTop, a[0], a[end], end), LN.swapTop);
+      swp++;
+      const t = a[0]; a[0] = a[end]; a[end] = t;
+      sortedTail.push(end);
+      snap(F(T.extractSwapped, a[end], end, a[0]), LN.swapTop);
+      snap(F(T.siftRoot, 0, end), LN.siftCall);
+      yield* sift(0, end);
+      phase = 'heapOk';
+      rows.push({ label: F(T.rowExtract, end), cols: [String(cmp), String(swp), '[' + a.join(', ') + ']'] });
+      snap(F(T.extractDone, end, '[' + a.slice(0, end).join(', ') + ']'), -1);
+      phase = 'extract';
+    }
+    sortedTail.push(0);
+    phase = 'done'; size = 0;
+    snap(F(T.done, a.join(', '), cmp, swp, Math.ceil(n * Math.log2(n))), -1, {
+      done: true, ret: '[' + a.join(', ') + ']', retSub: F(T.doneSub, cmp, swp)
+    });
+  })();
+  for (;;) { if (g.next().done) break; }
+  return frames;
+}
+const CACHE = {};
+for (const k in PRESETS) CACHE[k] = buildFrames(k);
+
+// ---- self-check: frames vs the independent reference (called by the node tests)
+function verify() {
+  const out = [], bad = m => out.push(m);
+  for (const k in PRESETS) {
+    const M = PRESETS[k], F2 = CACHE[k], L = F2[F2.length - 1], R = M.ref;
+    const ms = M.arr.slice().sort((x, y) => x - y), n = M.arr.length;
+    if (JSON.stringify(L.view.arr) !== JSON.stringify(ms)) bad(k + ': final array');
+    if (L.view.cmp !== R.cmp || L.view.swp !== R.swp) bad(k + ': counters ' + L.view.cmp + '/' + L.view.swp + ' vs ' + R.cmp + '/' + R.swp);
+    for (const f of F2) {
+      const v = f.view;
+      if (JSON.stringify(v.arr.slice().sort((x, y) => x - y)) !== JSON.stringify(ms)) bad(k + ': not a permutation');
+      if (v.phase === 'heapOk') {   // once the heap is built/rebuilt: the heap region must satisfy the max-heap property
+        for (let rt = 0; rt < v.size; rt++) {
+          const Lq = 2 * rt + 1, Rq = 2 * rt + 2;
+          if (Lq < v.size && v.arr[Lq] > v.arr[rt]) bad(k + ': heap violated at ' + rt + '-' + Lq);
+          if (Rq < v.size && v.arr[Rq] > v.arr[rt]) bad(k + ': heap violated at ' + rt + '-' + Rq);
+        }
+      }
+      for (const q of v.sortedTail) if (v.arr[q] !== ms[q]) bad(k + ': sorted tail wrong at ' + q);
+      if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) bad(k + ': msg leak: ' + f.msg);
+      if (f.stats.some(s => /undefined|\{\d\}/.test(s))) bad(k + ': stats leak');
+    }
+    if (L.stepStates['4'] !== 'done') bad(k + ': step4');
+  }
+  return out;
+}
+/*%%LOGIC_END%%*/
+
+const V = {
+  render(f) {
+    const v = f.view, n = v.n;
+    // the array row
+    let h = '<div class="cellrow">';
+    for (let q = 0; q < n; q++) {
+      let cls = 'cell', mark = '';
+      if (q >= v.size && v.phase !== 'intro') { cls += ' sorted'; mark = '✓'; }
+      if (v.swapping && (q === v.root || q === v.big)) { cls += ' min'; mark = '⇄'; }
+      else if (q === v.root && v.root >= 0) { cls += ' keycell'; mark = '↑ root'; }
+      else if ((q === v.l || q === v.r) && v.phase === 'sift') { cls += ' scan'; mark = T.mkChild; }
+      h += '<div class="' + cls + '"><div class="ix">' + q + '</div><div class="val">' + v.arr[q] + '</div><div class="mark">' + mark + '</div></div>';
+    }
+    h += '</div>';
+    // the heap drawn as a tree (index k's parent is (k-1)/2)
+    const maxD = Math.floor(Math.log2(n)), W = Math.max(2, Math.pow(2, maxD)) * 66, rowH = 62, RAD = 17;
+    let svg = '<svg width="100%" viewBox="0 0 ' + W + ' ' + (28 + maxD * rowH + 20) + '" style="max-height:260px">';
+    const pos = k => { const d = Math.floor(Math.log2(k + 1)), idx = k - (Math.pow(2, d) - 1), cnt = Math.pow(2, d); return { x: (idx + 0.5) * (W / cnt), y: 26 + d * rowH }; };
+    for (let q = 1; q < n; q++) { const p = Math.floor((q - 1) / 2), A = pos(p), B = pos(q);
+      svg += '<line x1="' + A.x + '" y1="' + A.y + '" x2="' + B.x + '" y2="' + B.y + '" stroke="#a9bdd4" stroke-width="1.5"/>'; }
+    for (let q = 0; q < n; q++) {
+      const P = pos(q);
+      let fill = '#fff', stroke = '#a9bdd4', txt = '#1c2733';
+      if (q >= v.size && v.phase !== 'intro') { fill = '#e3f6ec'; stroke = '#1c9c57'; txt = '#137a42'; }
+      if (v.swapping && (q === v.root || q === v.big)) { fill = '#f3e8fa'; stroke = '#8e44ad'; txt = '#5b2c6f'; }
+      else if (q === v.root && v.root >= 0) { fill = '#fff3d6'; stroke = '#f0a83a'; txt = '#92400e'; }
+      else if ((q === v.l || q === v.r) && v.phase === 'sift') { fill = '#fff3d6'; stroke = '#f0a83a'; txt = '#92400e'; }
+      svg += '<circle cx="' + P.x + '" cy="' + P.y + '" r="' + RAD + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"/>'
+        + '<text x="' + P.x + '" y="' + (P.y + 5) + '" text-anchor="middle" font-size="14" font-family="Consolas,monospace" fill="' + txt + '">' + v.arr[q] + '</text>';
+    }
+    svg += '</svg>';
+    h += '<div class="heapwrap">' + svg + '</div>';
+    return h;
+  }
+};
+
+/* ===== shared shell (identical on every sort page) ===== */
+let mode = 'a', frames = [], idx = 0, playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function F(s) { for (let i = 1; i < arguments.length; i++) s = s.split('{' + (i - 1) + '}').join(arguments[i]); return s; }
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+function renderCode(f) {
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = F(T.codeTag, f.view.n, f.view.extra || '');
+  CODE.forEach((txt, k) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === k ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = k + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx); box.appendChild(row);
+  });
+  if (f.line >= 0) { const rows = box.querySelectorAll('.coderow'); if (rows[f.line]) box.scrollTop = Math.max(0, rows[f.line].offsetTop - box.clientHeight / 2); }
+}
+function renderTrace(f) {
+  const body = $('#traceBody'); body.innerHTML = '';
+  const head = T.traceHead;
+  let html = '<tr>' + head.map(h => '<th>' + h + '</th>').join('') + '</tr>';
+  if (!f.rows.length) html += '<tr>' + head.map((h, k) => '<td class="note">' + (k === 0 ? T.traceEmpty : '') + '</td>').join('') + '</tr>';
+  f.rows.forEach((r, k) => {
+    const cells = [r.label].concat(r.cols);
+    const cls = (k === f.rows.length - 1 && !f.done) ? 'cur' : '';
+    html += '<tr' + (cls ? ' class="' + cls + '"' : '') + '>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>';
+  });
+  body.innerHTML = html;
+  $('#traceTag').textContent = F(T.traceTag, f.rows.length);
+}
+function renderStats(f) { $('#statRow').innerHTML = f.stats.map(s => '<span>' + s + '</span>').join(''); }
+function renderSteps(f) {
+  document.querySelectorAll('#stepList .st').forEach(el => {
+    const k = el.dataset.step, st = (f.stepStates || {})[k] || '';
+    el.className = 'st' + (st ? ' ' + st : '');
+  });
+}
+function render() {
+  const f = frames[idx];
+  $('#stage').innerHTML = V.render(f);
+  renderTrace(f); renderStats(f); renderSteps(f); renderCode(f);
+  const d = $('#desc'); d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  $('#phaseTag').textContent = T.phase[f.phase] || f.phase;
+  $('#modeTag').textContent = F(T.modeTag, f.view.tag);
+  $('#chapter').textContent = F(T.chapter, f.view.tag);
+  $('#stepText').innerHTML = F(T.stepText, idx + 1, frames.length) + f.tail;
+  $('#answerBox').className = 'answerbox' + (f.bad ? ' no' : '');
+  $('#ret').innerHTML = f.ret;
+  $('#retSub').innerHTML = f.retSub;
+  $('#seek').max = frames.length - 1; $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0; $('#bNext').disabled = idx >= frames.length - 1; $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? T.pause : T.play;
+}
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false); render();
+}
+$('#modes').addEventListener('click', e => { const b = e.target.closest('.mode-pill'); if (b) setMode(b.dataset.mode); });
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 700);
+
+</script>
+</body>
+</html>
