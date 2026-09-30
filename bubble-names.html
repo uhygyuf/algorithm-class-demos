@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quick Sort</title>
+<title>Bubble sort · 16 names desk check (Exercise 2)</title>
 <style>
   :root{
     --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
@@ -155,12 +155,13 @@
 
   <header>
     <div class="course">Data Structures · Sorting</div>
-    <h1>Quick Sort</h1>
+    <h1>Bubble Sort Desk Check — 16 names, step by step (Exercise 2)</h1>
     <div class="chapter" id="chapter"></div>
     <div class="modes" id="modes">
-      <button class="mode-pill active" data-mode="a">1. A typical case: 6 shuffled numbers<small>10, 7, 8, 9, 1, 5</small></button>
-      <button class="mode-pill" data-mode="b">2. Already sorted: the worst case<small>a fixed last-element pivot → O(n²)</small></button>
-      <button class="mode-pill" data-mode="c">3. Fully reversed<small>every pivot is small</small></button>
+      <button class="mode-pill active" data-mode="a">1. The courseware data set, comparison by comparison<small>13 passes / 117 comparisons / 87 swaps</small></button>
+      <button class="mode-pill" data-mode="b">2. The courseware data set, one row per pass (the pro forma)<small>the table to hand in</small></button>
+      <button class="mode-pill" data-mode="c">3. Already sorted (best case)<small>1 pass · 15 comparisons · 0 swaps → early exit</small></button>
+      <button class="mode-pill" data-mode="d">4. Fully reversed (worst case)<small>120 comparisons / 120 swaps</small></button>
     </div>
     <div class="nav">
       <a href="index.html">1. Tree traversals</a>
@@ -182,29 +183,29 @@
       <a href="bubble-sort.html">17. Bubble sort</a>
       <a href="insertion-sort.html">18. Insertion sort</a>
       <a href="shell-sort.html">19. Shell sort</a>
-      <a href="quick-sort.html" class="on">20. Quick sort</a>
+      <a href="quick-sort.html">20. Quick sort</a>
       <a href="selection-sort.html">21. Selection sort</a>
       <a href="heap-sort.html">22. Heap sort</a>
       <a href="merge-sort.html">23. Merge sort</a>
       <a href="radix-sort.html">24. Radix sort</a>
-      <a href="bubble-names.html">25. Bubble sort · names</a>
+      <a href="bubble-names.html" class="on">25. Bubble sort · names</a>
     </div>
   </header>
 
   <div class="grid">
     <div class="lcol">
       <div class="card">
-        <h3>🔢 The array a[] (current range / settled pivots) <span class="tag" id="modeTag"></span></h3>
+        <h3>🔤 The array listElement[16] (names) <span class="tag" id="modeTag"></span></h3>
         <div id="stage"></div>
-        <div class="legend"><span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>settled pivot (final position)</span><span><span class="dot" style="background:#fff;border:1.5px solid #0f5da8"></span>current range [lo, hi]</span><span><span class="dot" style="background:#f3e8fa;border:1px solid #8e44ad"></span>pivot</span><span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>j scanning / i target</span></div>
+        <div class="legend"><span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>comparing i with i+1</span><span><span class="dot" style="background:#f3e8fa;border:1px solid #8e44ad"></span>just swapped</span><span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>this pass's maximum, now in place</span><span style="font-family:Consolas,monospace">numComparisons = pairs checked this pass</span></div>
         <div class="statrow" id="statRow"></div>
         <div class="answerbox" id="answerBox">
-          <span class="alabel">result</span><span class="ret" id="ret"></span><span class="ret-sub" id="retSub"></span>
+          <span class="alabel">current array</span><span class="ret" id="ret"></span><span class="ret-sub" id="retSub"></span>
         </div>
       </div>
 
       <div class="card">
-        <h3>🧾 Partition record <span class="tag" id="traceTag"></span></h3>
+        <h3>🧾 The desk-check pro forma (one row per pass) <span class="tag" id="traceTag"></span></h3>
         <table class="trace"><thead></thead><tbody id="traceBody"></tbody></table>
       </div>
 
@@ -216,24 +217,25 @@
 
     <div class="rcol">
       <div class="card">
-        <h3>💻 The algorithm (courseware-style C++) <span class="tag" id="codeTag"></span></h3>
+        <h3>💻 The algorithm (the courseware listing, verbatim) <span class="tag" id="codeTag"></span></h3>
         <div class="codebox" id="codeBox"></div>
-        <div class="code-foot">Yellow = the line being executed. One partition <b>settles exactly one position</b> (the pivot), then both halves are recursed into.</div>
+        <div class="code-foot">Yellow = the line being executed. <b>The recipe</b>: set swapMade to FALSE at the start of each pass → compare pairs and swap (setting swapMade) → decrement numComparisons at the end of the pass → finish when a pass made no swap.</div>
       </div>
       <div class="card">
-        <h3>📄 Key points</h3>
+        <h3>📄 Key points & how to fill in the pro forma</h3>
         <div class="steplist" id="stepList">
-        <div class="st" data-step="1"><span class="no">1</span><span>Take the range's last element as the <b>pivot</b></span></div>
-        <div class="st" data-step="2"><span class="no">2</span><span><code>j</code> scans; values smaller than the pivot move to <code>i</code></span></div>
-        <div class="st" data-step="3"><span class="no">3</span><span>Finally <code>swap(a[i], a[hi])</code> → the <b>pivot is settled</b> for good</span></div>
-        <div class="st" data-step="4"><span class="no">4</span><span>Recurse into both halves; average O(n log n), worst case (sorted input) O(n²)</span></div>
+        <div class="st" data-step="1"><span class="no">1</span><span><code>swapMade = TRUE</code>, <code>numComparisons = sizeOfList − 1</code></span></div>
+        <div class="st" data-step="2"><span class="no">2</span><span>Each pass: compare i = 0 … numComparisons−1, swap when out of order and set swapMade</span></div>
+        <div class="st" data-step="3"><span class="no">3</span><span>End of pass: <code>Decrement numComparisons</code> (the settled maximum needs no more checks)</span></div>
+        <div class="st" data-step="4"><span class="no">4</span><span>A pass with no swap (swapMade = FALSE) → the WHILE ends, the sort is done</span></div>
+        <div class="st" data-step="5"><span class="no">5</span><span>Hand in: one row per pass with the whole array, plus the two totals at the bottom</span></div>
         </div>
-        <div class="idea"><b>Why is it fast?</b> A partition costs one scan of the range, yet the pivot splits it in two, so the recursion is only log n levels deep → average <b>O(n log n)</b> with a very small constant factor (just comparisons and swaps, no extra array), which is why it is usually the fastest in practice.<br><b>Worst case:</b> when every pivot is the largest or smallest value the range shrinks by one element each time and it degrades to <b>O(n²)</b>. A fixed last-element pivot on sorted input is the classic example (run 2 on this page); the fix is a <b>random or median-of-three pivot</b>.<br><b>Space:</b> the recursion stack, O(log n) (worst O(n)); <b>stability:</b> the long-distance swaps skip equal values → <b>not stable</b>.<br><b>Optimisation:</b> finish small ranges (length &lt; ~10) with insertion sort to avoid a pile of recursive calls.</div>
+        <div class="idea"><b>How do I fill in the pro forma?</b> <b>One row = one pass</b>: copy the whole 16-name array as it stands after that pass. Then put the <b>total comparisons</b> in the bottom-left box and the <b>total swaps</b> in the middle box. Every row of the table on this page can be copied straight over — the “Copy the table” button even copies it as TSV for Word/Excel.<br><b>Why one comparison fewer each pass?</b> At the end of a pass the largest element has been pushed to the end of the unsorted part — it is already in place, so it never needs checking again, hence <code>numComparisons</code> is decremented.<br><b>Two optimisations:</b> (1) <code>swapMade</code> stops early on data that is already sorted (best case: 1 pass, 15 comparisons); (2) decrementing <code>numComparisons</code> saves one comparison per pass, bringing the total down from n² to n(n−1)/2.<br><b>This data set:</b> 13 passes · 117 comparisons · 87 swaps; during pass 13 <code>swapMade</code> stays FALSE, so the loop ends.<br><b>Stability:</b> only a strict inversion (<code>&gt;</code>) swaps, so equal values never cross → bubble sort is <b>stable</b>.</div>
       </div>
     </div>
   </div>
 
-  
+  <div class="card widecard"><h3>📋 Desk-check pro forma (one row per pass) <span class="tag" id="wideTag"></span><button class="btn2 ghost" id="copyTsv" style="margin-left:auto">📋 Copy the table (TSV)</button></h3><div class="tracewrap"><table class="trace"><thead></thead><tbody id="wideBody"></tbody></table></div></div>
 
   <div class="controls card">
     <button class="btn2 ghost" id="bReset" title="⏮ Reset (R)">⏮ Reset</button>
@@ -250,49 +252,72 @@
 
 <script>
 const T = {
- "intro1": "Task: sort <code>[{0}]</code> into ascending order with <b>quicksort</b>.",
- "intro2": "The idea (courseware Lomuto partition): take the <b>last element of the range as the pivot</b>; walk <code>j</code> from left to right and move anything smaller than the pivot to position <code>i</code>, advancing i. After the scan <code>[lo, i-1]</code> holds the smaller values; swap i with the pivot and <b>the pivot lands on its final position</b>; then recurse into both halves.",
- "pushRange": "Push the whole array's range <code>[{0}, {1}]</code> (the stack simulates the recursion)",
- "popRange": "Pop the range <code>[{0}, {1}]</code> and process it ({2} range(s) still on the stack)",
- "tooShort": "The range <code>[{0}, {1}]</code> has length ≤ 1 → <b>already ordered</b>, nothing to do (the recursion's base case <code>if (lo &gt;= hi) return;</code>)",
- "pickPivot": "Pick the pivot: <code>a[{0}] = {1}</code> (the last element of the range)",
- "less": "a[{0}] = {1} <b>&lt; pivot {2}</b> → it belongs to the left side and should move to position {3}",
- "swapLess": "Swap a[{1}] with a[{0}]: now a[{1}] = {2} and a[{0}] = {3} (the left side grew by one)",
- "alreadyThere": "a[{0}] = {1} already sits at position {2} → no swap, i advances",
- "notLess": "a[{0}] = {1} ≥ pivot {2} → it belongs to the right side, leave it",
- "pivotLands": "Swap the pivot {0} into position {1}: <b>the pivot is settled</b> (everything to its left is ≤ it, to its right ≥ it) and never moves again",
- "pushChildren": "The pivot at {0} is fixed; pushed for later: <code>{1}</code>",
- "pushNone": "(nothing left to process → the stack is empty and the sort is done)",
- "done": "✔ Sorted: <b>[{0}]</b> (ascending).<br>📌 <b>{1}</b> comparisons · <b>{2}</b> swaps.<br>💡 Quicksort is <b>divide and conquer: each partition settles one position for good</b>. On average every level halves the range, so the recursion depth is O(log n) → average time <b>O(n log n)</b> with the smallest constant, which is why it is usually the fastest in practice. But <b>if the pivot is always the largest or smallest value</b> (e.g. sorted input with a fixed last-element pivot) it degrades to <b>O(n²)</b> — run 2 on this page is exactly that worst case. Space O(log n) for the recursion stack; the partitioning swaps can jump over equal values → <b>not stable</b>.",
- "rowRange": "Range [{0}, {1}]",
- "stRange": "current range <b>{0}</b>",
- "stCmp": "comparisons <b>{0}</b>",
- "stSwp": "swaps <b>{0}</b>",
- "stSettled": "settled <b>{0}</b> / {1}",
+ "intro1": "Task (courseware Exercise 2): use the <b>bubble sort</b> below to sort these {0} names into <b>alphabetical order</b>, working through the courseware pro forma step by step.",
+ "intro2": "The algorithm: <code>numComparisons</code> starts at {0} and is <b>decremented every pass</b> (each pass settles one more element, so there is one less pair to check); <code>swapMade</code> records <b>whether this pass swapped anything</b> — a pass with no swaps means the list is sorted, so <code>WHILE swapMade</code> ends immediately (that is the early-exit optimisation).",
+ "passStart": "Pass {0} begins: set <code>swapMade</code> to FALSE; this pass only compares i = 0 … {1}, and the pass counters are reset",
+ "compare": "Compare <code>listElement[{0}] = {1}</code> with <code>listElement[{2}] = {3}</code>: {4}",
+ "inOrder": "<b>{0} &lt; {1}</b> → already in alphabetical order, no swap, i moves on",
+ "outOfOrder": "<b>{0} &gt; {1}</b> → out of order, swap them and set <code>swapMade</code> to TRUE",
+ "swapNote": "Swap <code>listElement[{0}]</code> with <code>listElement[{1}]</code> → they are now <b>{2}, {3}</b> (swap #{4})",
+ "passEnd": "Pass {0} done: {1} comparisons · {2} swaps → <code>swapMade = {3}</code>; one more element is now in place, so <code>Decrement numComparisons</code> → {4}. {5}",
+ "flagTrue": "swapMade is TRUE → <b>run another pass</b>",
+ "flagFalse": "swapMade is FALSE → <b>the WHILE loop ends (early exit)</b>",
+ "done": "✔ Sorted (alphabetically): <b>{0}</b>.<br>📌 <b>{1}</b> pass(es) · <b>{2}</b> comparisons · <b>{3}</b> swaps — copy this table onto the courseware pro forma (one row per pass; the two totals go in the boxes at the bottom).<br>💡 Compare: already sorted data needs 1 pass with 15 comparisons and 0 swaps (swapMade stays FALSE and the loop exits); fully reversed data is the worst case with 120 comparisons and 120 swaps.",
+ "rowPass": "Pass {0}",
  "tail": " · {0} compared / {1} swapped",
  "doneSub": "{0} comparisons · {1} swaps",
- "retSubWait": "each pivot finds its place and the ranges shrink",
- "pivotLabel": "this pivot:",
- "pivotEmpty": "pivot = (none)",
- "stackLabel": "pending ranges:",
- "stackEmpty": "(empty — all done)",
- "mkPivot": "pivot",
- "codeTag": "n = {0} {1}",
- "modeTag": "[{0}]",
- "chapter": "Quicksort — Lomuto partition: take the range's last element as pivot, move smaller values left, swap the pivot into place, then recurse into both halves (average O(n log n), worst O(n²))",
+ "retSubWait": "one row per pass = one row of the pro forma",
+ "stPass": "pass <b>{0}</b>",
+ "stCmp": "comparisons <b>{0}</b>",
+ "stSwp": "swaps <b>{0}</b>",
+ "stFlag": "swapMade = <b>{0}</b>",
+ "stNum": "numComparisons = <b>{0}</b>",
+ "yes": "TRUE",
+ "no": "FALSE",
+ "lblFlag": "swapped this pass:",
+ "lblNum": "comparisons left:",
+ "lblI": "current index:",
+ "lblPass": "pass:",
+ "numDone": "numComparisons has reached 0 → the next FOR body never runs, swapMade stays FALSE and the WHILE ends",
+ "headLabel": "Pass",
+ "headTail": [
+  "Comparisons",
+  "Swaps",
+  "swapMade"
+ ],
+ "copy": "📋 Copy the table (TSV)",
+ "copied": "copied ✔",
+ "codeTag": "pseudocode · sizeOfList = {0} {1}",
+ "modeTag": "{0} names",
+ "chapter": "Bubble sort desk check — courseware Exercise 2: 16 names with the swapMade early exit and a numComparisons counter that shrinks every pass; the table is the pro forma to fill in",
  "phase": {
-  "intro": "task & idea",
-  "pop": "pop a range",
-  "partition": "partitioning",
-  "place": "the pivot lands",
+  "intro": "task & algorithm",
+  "passStart": "new pass (swapMade = FALSE)",
+  "inner": "the FOR loop: compare pairs",
+  "passEnd": "pass done (Decrement)",
   "done": "done ✔"
  },
  "traceHead": [
-  "Range",
+  "Pass",
+  "0",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
   "Comparisons",
   "Swaps",
-  "Pivot index",
-  "Array after the partition"
+  "swapMade"
  ],
  "traceEmpty": "(no record yet)",
  "traceTag": "{0} row(s)",
@@ -339,120 +364,110 @@ const RT = {
 };
 
 /*%%LOGIC_BEGIN%%*/
+/* the courseware EXERCISE 2 data set: 16 names (index 0..15) */
+const NAMES = ["Ben", "Tom", "Sam", "Max", "Leo", "Roy", "Ken", "Ray", "Jon", "Tim", "Joe", "Gus", "Dan", "Bob", "Eli", "Jay"];
 const PRESETS = {
-  a: { arr: [10, 7, 8, 9, 1, 5] },
-  b: { arr: [1, 2, 3, 4, 5] },
-  c: { arr: [6, 5, 4, 3, 2, 1] }
+  a: { arr: NAMES.slice() },                                    // the courseware data set, every comparison and swap animated
+  b: { arr: NAMES.slice(), passOnly: true },                     // the courseware data set, one frame per pass (for filling the pro forma)
+  c: { arr: NAMES.slice().sort() },                              // already alphabetical → finishes in a single pass
+  d: { arr: NAMES.slice().sort().reverse() }                     // fully reversed → the worst case
 };
-// // independent reference (Lomuto partition, a stack simulates the recursion: right pushed first, so the left is processed first)
-function refQuick(input) {
-  const a = input.slice(), n = a.length, st = [[0, n - 1]];
-  let cmp = 0, swp = 0, rows = [];
-  while (st.length) {
-    const r = st.pop(), lo = r[0], hi = r[1];
-    if (lo >= hi) continue;
-    const pivot = a[hi]; const c0 = cmp, s0 = swp;
-    let i = lo;
-    for (let j = lo; j < hi; j++) { cmp++; if (a[j] < pivot) { if (i !== j) { const t = a[i]; a[i] = a[j]; a[j] = t; swp++; } i++; } }
-    if (i !== hi) { const t = a[i]; a[i] = a[hi]; a[hi] = t; swp++; }
-    rows.push({ label: F(T.rowRange, lo, hi), cols: [String(cmp - c0), String(swp - s0), String(i), '[' + a.join(', ') + ']'] });
-    if (i + 1 < hi) st.push([i + 1, hi]);
-    if (lo < i - 1) st.push([lo, i - 1]);
+// // independent reference: a literal transcription of the courseware pseudocode (swapMade flag + numComparisons decremented each pass)
+function refBubble(list) {
+  const a = list.slice(), n = a.length;
+  let swapMade = true, numComparisons = n - 1, cmp = 0, swp = 0, rows = [];
+  while (swapMade) {
+    swapMade = false;
+    const c0 = cmp, s0 = swp;
+    for (let i = 0; i < numComparisons; i++) {
+      cmp++;
+      if (a[i] > a[i + 1]) { const t = a[i]; a[i] = a[i + 1]; a[i + 1] = t; swp++; swapMade = true; }
+    }
+    numComparisons--;
+    rows.push({ pass: rows.length + 1, arr: a.slice(), cmp: cmp - c0, swp: swp - s0, swapMade: swapMade });
   }
   return { arr: a, cmp: cmp, swp: swp, rows: rows };
 }
-for (const k in PRESETS) PRESETS[k].ref = refQuick(PRESETS[k].arr);
+for (const k in PRESETS) PRESETS[k].ref = refBubble(PRESETS[k].arr);
+
+/* the courseware listing verbatim: the swapMade flag plus a numComparisons counter */
 const CODE = [
-  'void quickSort(int a[], int lo, int hi) {',
-  '    if (lo >= hi) return;                    // base case: a range of length <= 1',
-  '    int pivot = a[hi];                       // the last element of the range is the pivot',
-  '    int i = lo;',
-  '    for (int j = lo; j < hi; j++) {          // j scans left to right (excluding the pivot)',
-  '        if (a[j] < pivot) {                  // anything smaller than the pivot moves left',
-  '            swap(a[i], a[j]); i++;',
-  '        }',
-  '    }',
-  '    swap(a[i], a[hi]);                       // swap the pivot with i → settled',
-  '    quickSort(a, lo, i - 1);                 // recurse into both halves',
-  '    quickSort(a, i + 1, hi);',
-  '}'
+  'SET swapMade to TRUE',
+  'SET numComparisons TO sizeOfList - 1',
+  'WHILE swapMade',
+  '    SET swapMade To FALSE',
+  '    FOR i = 0 TO numComparisons - 1',
+  '        IF listElement[i] > listElement[i+1] THEN',
+  '            Swap listElement[i] value with listElement[i+1]',
+  '            SET swapMade to TRUE',
+  '        END IF',
+  '    END FOR',
+  '    Decrement numComparisons',
+  'END WHILE'
 ];
-const LN = { guard: 1, pivot: 2, i: 3, scan: 4, less: 5, place: 9, recL: 10, recR: 11 };
+const LN = { setFlag: 3, forLine: 4, ifLine: 5, swapLine: 6, setTrue: 7, decrement: 10 };
 
 function buildFrames(mk) {
-  const M = PRESETS[mk], n = M.arr.length, a = M.arr.slice(), frames = [], rows = [];
-  let cmp = 0, swp = 0, lo = -1, hi = -1, i = -1, j = -1, pivot = null, phase = 'intro';
-  const settled = [];
-  let stack = [], swpPair = [];
+  const M = PRESETS[mk], passOnly = !!M.passOnly, n = M.arr.length;
+  const a = M.arr.slice(), frames = [], rows = [];
+  let cmp = 0, swp = 0, pass = 0, i = -1, numComparisons = n - 1, swapMade = true;
+  let phase = 'intro', pair = [], swapping = false, sortedFrom = n, passCmps = 0, passSwaps = 0;
+
   function snap(msg, line, extra) {
     frames.push(RT.frame({
-      msg: msg, line: line, phase: phase, done: false, bad: false,
-      tail: F(T.tail, cmp, swp),
+      msg: msg, line: line, phase: phase, tail: F(T.tail, cmp, swp),
       rows: RT.cloneRows(rows),
-      stats: [F(T.stRange, lo < 0 ? '—' : '[' + lo + ', ' + hi + ']'), F(T.stCmp, cmp), F(T.stSwp, swp), F(T.stSettled, settled.length, n)],
+      stats: [F(T.stPass, pass || '—'), F(T.stCmp, cmp), F(T.stSwp, swp),
+              F(T.stFlag, swapMade ? T.yes : T.no), F(T.stNum, Math.max(numComparisons, 0))],
       stepStates: {
-        '1': (pivot === null ? (cmp > 0 ? 'done' : '') : 'done'),
-        '2': (phase === 'partition' ? 'cur' : (rows.length ? 'done' : '')),
-        '3': (phase === 'place' ? 'cur' : (rows.length ? 'done' : '')),
-        '4': (phase === 'done' ? 'done' : '')
+        '1': (pass ? 'done' : 'cur'),
+        '2': (phase === 'inner' ? 'cur' : (cmp > 0 ? 'done' : '')),
+        '3': (swp > 0 ? 'done' : ''),
+        '4': (phase === 'passEnd' ? 'cur' : (pass > 1 ? 'done' : '')),
+        '5': (phase === 'done' ? 'done' : '')
       },
-      ret: '[' + a.join(', ') + ']', retSub: T.retSubWait,
-      view: { n: n, arr: a.slice(), lo: lo, hi: hi, i: i, j: j, pivot: pivot, phase: phase,
-              settled: settled.slice(), stack: stack.map(r => r.slice()), swpPair: swpPair.slice(), cmp: cmp, swp: swp, extra: '' }
+      ret: RT.a2s(a), retSub: T.retSubWait,
+      view: { n: n, arr: a.slice(), i: i, pair: pair.slice(), swapping: swapping, sortedFrom: sortedFrom,
+              numComparisons: numComparisons, swapMade: swapMade, pass: pass, phase: phase,
+              cmp: cmp, swp: swp, extra: '' }
     }, extra));
   }
+
   const g = (function* () {
-    snap(F(T.intro1, a.join(', ')), -1);
-    snap(T.intro2, -1);
-    stack = [[0, n - 1]];
-    snap(F(T.pushRange, 0, n - 1), -1);
-    while (stack.length) {
-      const r = stack.pop(); lo = r[0]; hi = r[1];
-      phase = 'pop'; pivot = null; i = -1; j = -1; swpPair = [];
-      if (lo >= hi) {
-        snap(F(T.tooShort, lo, hi), LN.guard);
-        if (lo === hi) settled.push(lo);
-        continue;
-      }
-      snap(F(T.popRange, lo, hi, stack.length), LN.guard);
-      pivot = a[hi]; i = lo;
-      snap(F(T.pickPivot, hi, pivot), LN.pivot);
-      phase = 'partition';
-      const c0 = cmp, s0 = swp;
-      for (j = lo; j < hi; j++) {
-        cmp++;
-        if (a[j] < pivot) {
-          snap(F(T.less, j, a[j], pivot, i), LN.less);
-          if (i !== j) {
-            swpPair = [i, j]; swp++;
-            const t = a[i]; a[i] = a[j]; a[j] = t;
-            snap(F(T.swapLess, j, i, a[i], a[j]), LN.scan);
-          } else {
-            snap(F(T.alreadyThere, j, a[j], i), LN.scan);
-          }
-          i++;
-        } else {
-          snap(F(T.notLess, j, a[j], pivot), LN.scan);
+    snap(F(T.intro1, n), -1);
+    snap(F(T.intro2, n - 1), -1);
+    while (swapMade) {
+      pass++;
+      swapMade = false; passSwaps = 0; passCmps = 0;
+      phase = 'passStart'; pair = []; swapping = false; i = -1;
+      snap(F(T.passStart, pass, numComparisons), LN.setFlag);
+      phase = 'inner';
+      for (i = 0; i < numComparisons; i++) {
+        cmp++; passCmps++;
+        pair = [i, i + 1]; swapping = false;
+        if (!passOnly) {
+          const verdict = (a[i] > a[i + 1]) ? F(T.outOfOrder, a[i], a[i + 1]) : F(T.inOrder, a[i], a[i + 1]);
+          snap(F(T.compare, i, a[i], i + 1, a[i + 1], verdict), LN.ifLine);
+        }
+        if (a[i] > a[i + 1]) {
+          const t = a[i]; a[i] = a[i + 1]; a[i + 1] = t;
+          swp++; passSwaps++; swapMade = true; swapping = true;
+          if (!passOnly) snap(F(T.swapNote, i, i + 1, a[i], a[i + 1], swp), LN.setTrue);
         }
       }
-      swpPair = [];
-      if (i !== hi) { swp++; swpPair = [i, hi]; const t = a[i]; a[i] = a[hi]; a[hi] = t; }
-      phase = 'place';
-      settled.push(i);
-      snap(F(T.pivotLands, pivot, i), LN.place);
-      swpPair = [];
-      rows.push({ label: F(T.rowRange, lo, hi), cols: [String(cmp - c0), String(swp - s0), String(i), '[' + a.join(', ') + ']'] });
-      if (i + 1 < hi) stack.push([i + 1, hi]);
-      if (lo < i - 1) stack.push([lo, i - 1]);
-      const pushed = [];
-      if (i + 1 < hi) pushed.push('[' + (i + 1) + ', ' + hi + ']');
-      if (lo < i - 1) pushed.push('[' + lo + ', ' + (i - 1) + ']');
-      snap(F(T.pushChildren, i, (pushed.length ? pushed.join('  ') : T.pushNone)), LN.recL);
-      if (!stack.length) break;
+      i = -1; pair = []; swapping = false;
+      if (pass <= n) sortedFrom = n - pass;
+      numComparisons--;
+      rows.push({ label: F(T.rowPass, pass),
+                  cols: a.slice().concat([String(passCmps), String(passSwaps), swapMade ? T.yes : T.no]) });
+      phase = 'passEnd';
+      snap(F(T.passEnd, pass, passCmps, passSwaps, swapMade ? T.yes : T.no, numComparisons,
+             swapMade ? T.flagTrue : T.flagFalse), LN.decrement);
     }
-    phase = 'done'; lo = hi = i = j = -1; pivot = null;
-    snap(F(T.done, a.join(', '), cmp, swp), -1, {
-      done: true, ret: '[' + a.join(', ') + ']', retSub: F(T.doneSub, cmp, swp)
+    phase = 'done'; i = -1; pair = []; swapping = false; sortedFrom = 0; numComparisons = -1;
+    snap(F(T.done, a.join(', '), pass, cmp, swp), -1, {
+      done: true, ret: RT.a2s(a), retSub: F(T.doneSub, cmp, swp),
+      stepStates: { '1': 'done', '2': 'done', '3': 'done', '4': 'done', '5': 'done' }
     });
   })();
   for (;;) { if (g.next().done) break; }
@@ -461,25 +476,51 @@ function buildFrames(mk) {
 const CACHE = {};
 for (const k in PRESETS) CACHE[k] = buildFrames(k);
 
-// ---- self-check: frames vs the independent reference (called by the node tests)
+// ---- self-check: frames and pro-forma rows vs the independent reference (called by the node tests)
 function verify() {
   const __v = RT.verifier(), out = __v.out, bad = __v.bad;
   for (const k in PRESETS) {
     const M = PRESETS[k], F2 = CACHE[k], L = F2[F2.length - 1], R = M.ref;
-    const ms = M.arr.slice().sort((x, y) => x - y);
-    if (JSON.stringify(L.view.arr) !== JSON.stringify(ms)) bad(k + ': final array');
+    const ms = M.arr.slice().sort();
+    const names = M.arr.slice().sort().join('|');
+    if (L.view.arr.join('|') !== ms.join('|')) bad(k + ': final order ' + L.view.arr.join(','));
     if (L.view.cmp !== R.cmp || L.view.swp !== R.swp) bad(k + ': counters ' + L.view.cmp + '/' + L.view.swp + ' vs ' + R.cmp + '/' + R.swp);
-    if (L.rows.length !== R.rows.length) bad(k + ': rows ' + L.rows.length + ' vs ' + R.rows.length);
+    if (L.rows.length !== R.rows.length) bad(k + ': pass rows ' + L.rows.length + ' vs ' + R.rows.length);
+    // every pro-forma row must match the reference line by line (this table is the homework, not one cell may differ)
+    L.rows.forEach((row, q) => {
+      const e = R.rows[q];
+      const arr = row.cols.slice(0, M.arr.length).join('|');
+      if (arr !== e.arr.join('|')) bad(k + ': pass row ' + (q + 1) + ' array differs');
+      if (row.cols[M.arr.length] !== String(e.cmp) || row.cols[M.arr.length + 1] !== String(e.swp)) bad(k + ': pass row ' + (q + 1) + ' counters');
+    });
+    let prevCmp = 0, prevSwp = 0, lastNum = null;
     for (const f of F2) {
       const v = f.view;
-      if (!__v.perm(v.arr, ms)) bad(k + ': not a permutation');
-      for (const q of v.settled) if (v.arr[q] !== ms[q]) bad(k + ': settled index ' + q + ' holds ' + v.arr[q] + ' not ' + ms[q]);
-      for (const r of v.stack) if (r[0] < 0 || r[1] >= v.n || r[0] > r[1]) bad(k + ': illegal stack range ' + r);
-      if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) bad(k + ': msg leak: ' + f.msg);
+      if (v.arr.slice().sort().join('|') !== names) bad(k + ': not a permutation of the names');
+      if (v.cmp < prevCmp || v.swp < prevSwp) bad(k + ': counters went backwards');
+      prevCmp = v.cmp; prevSwp = v.swp;
+      // after each pass: the last `pass` elements must be the largest ones (the defining property of bubble sort)
+      for (let q = n0(v); q < v.n - 1; q++) if (v.arr[q] > v.arr[q + 1]) bad(k + ': settled tail not ascending');
+      // numComparisons decreases by one every pass
+      if (f.phase === 'passStart') {
+        if (v.numComparisons !== v.n - 1 - (v.pass - 1)) bad(k + ': numComparisons wrong at pass ' + v.pass);
+        lastNum = v.numComparisons;
+      }
+      if (f.phase === 'passEnd') {
+        if (v.numComparisons !== lastNum - 1) bad(k + ': Decrement numComparisons missing');
+        const refSw = R.rows[v.pass - 1] ? R.rows[v.pass - 1].swp : -1;   // how many swaps the reference made in this pass
+        if (v.swapMade !== (refSw > 0)) bad(k + ': swapMade flag wrong at pass ' + v.pass);
+      }
       __v.leak(f, k);
     }
-    if (L.stepStates['4'] !== 'done') bad(k + ': step4');
+    if (L.stepStates['5'] !== 'done') bad(k + ': step5 not done');
+    // early exit: the final pass must swap nothing (the courseware loop's termination condition)
+    const lastRow = R.rows[R.rows.length - 1];
+    if (lastRow.swp !== 0) bad(k + ': the loop must stop on a pass with no swaps');
+    if (k === 'c' && R.rows.length !== 1) bad(k + ': sorted input must finish in one pass');
+    if (k === 'd' && (R.cmp !== 120 || R.swp !== 120)) bad(k + ': reversed input worst case should be 120/120');
   }
+  function n0(v) { return Math.max(0, v.n - v.pass); }
   return out;
 }
 /*%%LOGIC_END%%*/
@@ -487,27 +528,53 @@ function verify() {
 const V = {
   render(f) {
     const v = f.view, n = v.n;
-    let h = '<div class="cellrow">';
-    const inRange = q => (v.lo >= 0 && q >= v.lo && q <= v.hi);
+    let h = '<div class="cellrow names">';
     for (let q = 0; q < n; q++) {
-      let cls = 'cell', mark = '';
-      if (v.settled.indexOf(q) >= 0) { cls += ' sorted'; mark = '✓'; }
-      else if (inRange(q)) cls += ' bound';
-      if (v.swpPair.indexOf(q) >= 0) { cls += ' min'; mark = '⇄'; }
-      else if (q === v.i && v.pivot !== null && v.phase === 'partition') { cls += ' scan'; mark = '↑ i'; }
-      else if (q === v.j) { cls += ' keycell'; mark = '↑ j'; }
-      else if (q === v.hi && v.pivot !== null) { cls += ' min'; mark = T.mkPivot; }
+      let cls = 'cell name', mark = '';
+      if (q >= v.sortedFrom && v.pass >= 1) { cls += ' sorted'; mark = '✓'; }
+      if (v.swapping && v.pair.indexOf(q) >= 0) { cls += ' swapping'; mark = '⇄'; }
+      else if (!v.swapping && v.pair.indexOf(q) >= 0) { cls += ' pair'; mark = q === v.pair[0] ? '↑ i' : '↑ i+1'; }
       h += '<div class="' + cls + '"><div class="ix">' + q + '</div><div class="val">' + v.arr[q] + '</div><div class="mark">' + mark + '</div></div>';
     }
     h += '</div>';
-    h += '<div class="keybar"><span class="keylbl">' + T.pivotLabel + '</span><span class="keycard' + (v.pivot === null ? ' empty' : '') + '">'
-      + (v.pivot === null ? T.pivotEmpty : 'pivot = ' + v.pivot) + '</span>'
-      + '<span class="keylbl">' + T.stackLabel + '</span><span class="stackbox">'
-      + (v.stack.length ? v.stack.map((r, q) => '<span class="stackitem' + (q === v.stack.length - 1 ? ' cur' : '') + '">[' + r[0] + ', ' + r[1] + ']</span>').join('') : '<span class="stackitem done">' + T.stackEmpty + '</span>')
-      + '</span></div>';
+    h += '<div class="keybar">'
+      + '<span class="keylbl">' + T.lblFlag + '</span><span class="keycard' + (v.swapMade ? '' : ' empty') + '">swapMade = ' + (v.swapMade ? T.yes : T.no) + '</span>'
+      + '<span class="keylbl">' + T.lblNum + '</span><span class="keycard">numComparisons = ' + Math.max(v.numComparisons, 0) + '</span>'
+      + '<span class="keylbl">' + T.lblI + '</span><span class="keycard' + (v.i < 0 ? ' empty' : '') + '">i = ' + (v.i < 0 ? '—' : v.i) + '</span>'
+      + '<span class="keylbl">' + T.lblPass + '</span><span class="keycard' + (v.pass ? '' : ' empty') + '">' + T.rowPass.replace('{0}', v.pass || '—') + '</span>'
+      + '</div>';
+    if (v.pass >= 1 && v.phase !== 'done' && v.numComparisons <= 0) h += '<div class="segbar"><span class="seg on">' + T.numDone + '</span></div>';
     return h;
   }
 };
+
+/* copy the pro forma as TSV in one click, ready to paste into Word or Excel */
+(function () {
+  const btn = document.getElementById('copyTsv');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    const ths = document.querySelectorAll('#wideBody, #traceBody');
+    const headRow = document.querySelector('table.trace thead tr');
+    const lines = [headRow ? [].map.call(headRow.querySelectorAll('th'), function (th) { return th.textContent.trim(); }).join('\t') : ''];
+    document.querySelectorAll('#traceBody tr').forEach(function (tr) {
+      const cells = [].map.call(tr.querySelectorAll('td'), function (td) { return td.textContent.trim(); });
+      if (cells.length) lines.push(cells.join('\t'));
+    });
+    const text = lines.join('\n');
+    btn.textContent = T.copied;
+    setTimeout(function () { btn.textContent = T.copy; }, 1600);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () { fallback(text); });
+    } else { fallback(text); }
+    function fallback(t) {
+      const ta = document.createElement('textarea');
+      ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      setTimeout(function () { document.body.removeChild(ta); }, 200);
+    }
+  });
+})();
 
 /* ===== shared shell (identical on every sort page) ===== */
 let mode = 'a', frames = [], idx = 0, playing = false, timer = null;

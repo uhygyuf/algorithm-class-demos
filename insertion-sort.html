@@ -140,6 +140,14 @@
   .segbar{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--ink-2);font-family:Consolas,monospace}
   .segbar .seg{border:1.5px dashed #a9bdd4;border-radius:6px;padding:1px 7px;background:#fff}
   .segbar .seg.on{border-color:var(--amber);background:var(--amber-pale);color:#92400e;font-weight:700}
+  /* ---- bubble-names page: name cells and the full-width pro-forma card ---- */
+  .cell.name{min-width:60px}
+  .cell.name .val{font-size:14.5px;padding:7px 2px;letter-spacing:-.3px}
+  .card.widecard{grid-column:1 / -1}
+  .card.widecard h3{display:flex;align-items:center;gap:8px}
+  .tracewrap{overflow:auto;max-width:100%}
+  .tracewrap table.trace{font-size:11.5px}
+  .tracewrap table.trace th,.tracewrap table.trace td{padding:2.5px 4px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -179,6 +187,7 @@
       <a href="heap-sort.html">22. Heap sort</a>
       <a href="merge-sort.html">23. Merge sort</a>
       <a href="radix-sort.html">24. Radix sort</a>
+      <a href="bubble-names.html">25. Bubble sort · names</a>
     </div>
   </header>
 
@@ -223,6 +232,8 @@
       </div>
     </div>
   </div>
+
+  
 
   <div class="controls card">
     <button class="btn2 ghost" id="bReset" title="⏮ Reset (R)">⏮ Reset</button>
@@ -501,6 +512,8 @@ function renderTrace(f) {
     html += '<tr' + (cls ? ' class="' + cls + '"' : '') + '>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>';
   });
   body.innerHTML = html;
+  const wide = $('#wideBody');
+  if (wide) { wide.innerHTML = html; if ($('#wideTag')) $('#wideTag').textContent = F(T.traceTag, f.rows.length); }
   $('#traceTag').textContent = F(T.traceTag, f.rows.length);
 }
 function renderStats(f) { $('#statRow').innerHTML = f.stats.map(s => '<span>' + s + '</span>').join(''); }
