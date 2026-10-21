@@ -36,7 +36,8 @@ network required. Open any file in a browser and it runs.
 | `radix-sort.html` | Sorting — Radix sort (LSD) | Ten buckets in a row: distribute by the current digit (the digit being sorted on is underlined inside each number), then pour buckets 0→9 back into the array, and each pass ends by stating that the array is sorted by its last k digits. Three runs: the classic 8 numbers (98 frames), 6 numbers with three-digit keys, and single digits (one pass). |
 | `bubble-names.html` | Exercise 2 — bubble sort desk check on 16 names | The courseware algorithm **verbatim** (a `swapMade` flag plus a `numComparisons` counter that shrinks every pass) applied to 16 names in alphabetical order. The stage shows the name array plus three state cards (`swapMade` / `numComparisons` / `i`), and a **full-width copy of the courseware pro forma** sits below it (one row per pass: the 16 index columns, that pass's comparisons and swaps, and the flag) with a **one-click TSV copy** for pasting into Word or Excel. Four runs: the courseware data set comparison by comparison (233 frames — 13 passes, 117 comparisons, 87 swaps), the same data set one row per pass (29 frames, ready to hand in), already sorted (1 pass, 15 comparisons, 0 swaps → early exit) and fully reversed (120 comparisons, 120 swaps). |
 
-`outcome2.html` is a separate, self-contained study companion (Chinese UI): the
+`outcome2.html` is item 26 in the top navigation and a separate, self-contained
+study companion (Chinese UI): the
 three exam question types — binary search trace tables, bubble sort step tables
 with comparison/swap counts, and recursive BST insertion with annotated tree
 drawings — plus worked solutions, step simulators, fill-in-the-table practice
