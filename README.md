@@ -34,6 +34,7 @@ network required. Open any file in a browser and it runs.
 | `heap-sort.html` | Sorting — Heap sort | The array and **the heap drawn as a tree** side by side (index k ↔ node k, parent/child edges drawn). The build phase sifts down bottom-up (parent and children highlighted); the extract phase swaps the maximum to the end and shrinks the heap. Every frame is checked against the max-heap property plus the settled tail. |
 | `merge-sort.html` | Sorting — Merge sort (bottom-up) | Width 1→2→4…: neighbouring runs meet with two pointers, an **auxiliary row** shows both runs with the i/j pointers, and the smaller value is written back to k. A per-round record table tracks each width; three runs show that sorted and reversed input cost almost the same (the count does not depend on the input order). |
 | `radix-sort.html` | Sorting — Radix sort (LSD) | Ten buckets in a row: distribute by the current digit (the digit being sorted on is underlined inside each number), then pour buckets 0→9 back into the array, and each pass ends by stating that the array is sorted by its last k digits. Three runs: the classic 8 numbers (98 frames), 6 numbers with three-digit keys, and single digits (one pass). |
+| `merge-topdown.html` | Sorting — Merge sort, top-down recursion | The courseware C++ (`merge` + `mergeSort`) transcribed verbatim, with the **recursion call tree** (range [l..r]; green = done, amber = current, grey = not reached), the **call stack**, the **L/R buffers** and the i/j pointers. Four runs: Exercise 1's array (91 frames, 6 merges, 14 comparisons → `[3,9,10,27,38,43,82]`), Exercise 2's array (12 comparisons → `[3,6,9,12,15,21,30]`, with answers to (a) and (b)), already sorted, fully reversed. A full-width card lists the six merges of both exercises and explains why sorted input needs *more* comparisons. |
 | `bubble-names.html` | Exercise 2 — bubble sort desk check on 16 names | The courseware algorithm **verbatim** (a `swapMade` flag plus a `numComparisons` counter that shrinks every pass) applied to 16 names in alphabetical order. The stage shows the name array plus three state cards (`swapMade` / `numComparisons` / `i`), and a **full-width copy of the courseware pro forma** sits below it (one row per pass: the 16 index columns, that pass's comparisons and swaps, and the flag) with a **one-click TSV copy** for pasting into Word or Excel. Four runs: the courseware data set comparison by comparison (233 frames — 13 passes, 117 comparisons, 87 swaps), the same data set one row per pass (29 frames, ready to hand in), already sorted (1 pass, 15 comparisons, 0 swaps → early exit) and fully reversed (120 comparisons, 120 swaps). |
 
 `outcome2.html` is item 26 in the top navigation and a separate, self-contained
@@ -93,6 +94,7 @@ selection-sort.html         sorting: selection sort
 heap-sort.html              sorting: heap sort
 merge-sort.html             sorting: merge sort (bottom-up)
 radix-sort.html             sorting: radix sort (LSD)
+merge-topdown.html          sorting: merge sort (top-down recursion)
 bubble-names.html           exercise 2: bubble sort desk check (16 names)
 ```
 

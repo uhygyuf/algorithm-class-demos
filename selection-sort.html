@@ -148,6 +148,17 @@
   .tracewrap{overflow:auto;max-width:100%}
   .tracewrap table.trace{font-size:11.5px}
   .tracewrap table.trace th,.tracewrap table.trace td{padding:2.5px 4px;white-space:nowrap}
+  /* ---- merge-topdown: range highlight, L/R buffers, call stack ---- */
+  .cell.range{border-color:#f0a83a;background:#fffaf0}
+  .auxrow{display:flex;align-items:center;gap:6px;margin-top:8px;font-family:Consolas,monospace}
+  .auxlbl{width:16px;color:#64748b;font-weight:700;font-size:12px}
+  .auxcell{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:30px;border-radius:8px;border:1px solid #cfd8e3;background:#fff;font-size:13px;color:#334155}
+  .auxcell.auxcur{border-color:#8e44ad;background:#f3e8fa;color:#6b21a8;font-weight:700}
+  .auxcell.auxdone{opacity:.45;text-decoration:line-through}
+  .stackrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
+  .stackchip{font-family:Consolas,monospace;font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid #cfd8e3;background:#f5f8fc;color:#334155}
+  .stackchip.top{border-color:#f0a83a;background:#fff3d6;color:#8a4b00;font-weight:700}
+  .stackempty{color:#94a3b8;font-size:12px}
 </style>
 </head>
 <body>
@@ -188,6 +199,7 @@
       <a href="merge-sort.html">23. Merge sort</a>
       <a href="radix-sort.html">24. Radix sort</a>
       <a href="bubble-names.html">25. Bubble sort · names</a>
+      <a href="merge-topdown.html">27. Merge sort · recursion tree</a>
       <a href="outcome2.html">26. Exam cram · outcome2</a>
     </div>
   </header>
