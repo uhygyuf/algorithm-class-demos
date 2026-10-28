@@ -159,6 +159,21 @@
   .stackchip{font-family:Consolas,monospace;font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid #cfd8e3;background:#f5f8fc;color:#334155}
   .stackchip.top{border-color:#f0a83a;background:#fff3d6;color:#8a4b00;font-weight:700}
   .stackempty{color:#94a3b8;font-size:12px}
+  /* ---- minstack: two vertical arrays + top ---- */
+  .msWrap{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  .msStack{display:flex;flex-direction:column;gap:6px;min-width:148px}
+  .msTitle{font:700 12px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#475569;margin-bottom:2px}
+  .msCell{display:flex;align-items:center;gap:8px;height:38px;border-radius:9px;border:1px dashed #cfd8e3;background:#f8fafc;padding:0 10px;font-family:Consolas,monospace}
+  .msCell.on{border-style:solid;background:#eef4ff;border-color:#c3d4f5}
+  .msCell.minCell.on{background:#e9f9f1;border-color:#bfe6cf}
+  .msCell.topCell{outline:2px solid #f0a83a;outline-offset:1px}
+  .msIdx{width:14px;color:#94a3b8;font-size:11px}
+  .msVal{flex:1;text-align:center;font-size:15px;color:#1e293b;font-weight:600}
+  .msMark{width:56px;font-size:10.5px;color:#b45309;text-align:right}
+  .msSide{display:flex;flex-direction:column;gap:8px;min-width:172px}
+  .msBadge{font:600 12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;color:#334155}
+  .msBadge.big{background:#fff7e6;border-color:#f0c987;color:#8a4b00}
+  .msHint{font-size:11.5px;color:#64748b;line-height:1.5}
 </style>
 </head>
 <body>
@@ -200,8 +215,9 @@
       <a href="merge-sort.html">23. Merge sort</a>
       <a href="radix-sort.html">24. Radix sort</a>
       <a href="bubble-names.html">25. Bubble sort · names</a>
-      <a href="merge-topdown.html" class="on">27. Merge sort · recursion tree</a>
       <a href="outcome2.html">26. Exam cram · outcome2</a>
+      <a href="merge-topdown.html" class="on">27. Merge sort · recursion tree</a>
+      <a href="minstack.html">28. Min-stack</a>
     </div>
   </header>
 

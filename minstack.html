@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Min-Stack (array implementation, O(1) getMin)</title>
+<style>
+  :root{
+    --blue:#0f5da8; --blue-d:#0b3d6e; --blue-pale:#e2eefa;
+    --green:#1c9c57; --green-d:#137a42; --green-pale:#e3f6ec;
+    --amber:#f0a83a; --amber-pale:#fff3d6;
+    --red:#d64545; --red-pale:#fdeaea;
+    --violet:#8e44ad; --violet-pale:#f3e8fa;
+    --ink:#1c2733; --ink-2:#5b6b7c; --line:#dde5ee; --bg:#f2f6fa;
+    --code-bg:#0f1b28;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  .wrap{max-width:1260px;margin:0 auto;padding:12px 14px 20px}
+  header{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;border-radius:14px;padding:12px 18px}
+  header .course{font-size:11px;opacity:.75;letter-spacing:.4px}
+  header h1{font-size:18px;font-weight:700;margin-top:2px}
+  header .chapter{font-size:12.5px;opacity:.9;margin-top:3px}
+  .nav{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .nav a{color:#fff;text-decoration:none;font-size:12px;border:1.5px solid rgba(255,255,255,.5);padding:4px 12px;border-radius:999px}
+  .nav a:hover{background:rgba(255,255,255,.2)}
+  .nav a.on{background:#fff;color:var(--blue);font-weight:600}
+  .modes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .mode-pill{border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .15s}
+  .mode-pill small{opacity:.8;display:block;font-weight:400;margin-top:1px}
+  .mode-pill:hover{background:rgba(255,255,255,.22)}
+  .mode-pill.active{background:#fff;color:var(--blue);font-weight:600;border-color:#fff}
+  .grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.92fr);gap:12px;margin-top:12px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(16,42,67,.06)}
+  .card h3{font-size:12.5px;color:var(--ink-2);margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .card h3 .tag{font-size:11px;color:var(--blue);background:var(--blue-pale);padding:0 8px;border-radius:999px;font-weight:600}
+  .lcol,.rcol{display:flex;flex-direction:column;gap:12px}
+
+  .cellrow{display:flex;gap:6px;flex-wrap:wrap;padding:4px 2px 0;align-items:flex-end}
+  .cell{min-width:52px;text-align:center;transition:transform .18s}
+  .cell .ix{font-size:10.5px;color:#9aa9b9;font-family:Consolas,monospace;background:#eef3f9;border:1px solid #dde5ee;border-bottom:none;border-radius:6px 6px 0 0;padding:2px 0}
+  .cell .val{font-family:Consolas,monospace;font-size:18px;font-weight:700;padding:8px 4px;border:1.5px solid #a9bdd4;border-radius:0 0 6px 6px;background:#fff;color:var(--ink)}
+  .cell.sorted .ix{background:#e8f3ec;color:#7fae94}
+  .cell.sorted .val{background:var(--green-pale);border-color:var(--green);color:var(--green-d)}
+  .cell.pair .ix{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .cell.pair .val{background:var(--amber-pale);border-color:var(--amber);color:#92400e;animation:pulse 1s infinite}
+  .cell.swapping .ix{background:var(--violet);color:#fff;border-color:var(--violet)}
+  .cell.swapping .val{background:var(--violet-pale);border-color:var(--violet);color:#5b2c6f}
+  .cell .mark{font-size:10.5px;font-weight:700;height:15px;color:#c3ccd6;font-family:Consolas,monospace}
+  .cell.pair .mark{color:#c47f12}
+  .cell.swapping .mark{color:var(--violet)}
+  .cell.sorted .mark{color:var(--green)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:11.5px;color:var(--ink-2)}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .statrow{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:8px}
+  .statrow b{color:var(--blue-d);font-family:Consolas,monospace;font-size:14px}
+
+  .answerbox{margin-top:9px;border:2px solid var(--green);background:var(--green-pale);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:48px}
+  .answerbox .alabel{font-weight:700;color:var(--green-d);font-size:13px;white-space:nowrap}
+  .ret{font-family:Consolas,monospace;font-size:16px;font-weight:700;color:var(--green-d)}
+  .ret-sub{font-size:12.5px;color:var(--ink-2)}
+  .badge{display:inline-block;background:var(--violet-pale);color:#5b2c6f;border:1px solid var(--violet);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600}
+
+  .trace{width:100%;border-collapse:collapse;font-size:12px}
+  .trace th{background:#eef3f9;color:var(--ink-2);font-weight:600;padding:4px 6px;border:1px solid var(--line);font-size:11.5px}
+  .trace td{padding:3.5px 6px;border:1px solid var(--line);text-align:center;font-family:Consolas,monospace}
+  .trace td.note{text-align:left;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:11.5px}
+  .trace tr.cur{background:var(--amber-pale)}
+  .trace tr.done{background:var(--green-pale)}
+  .trace .y{color:var(--green-d);font-weight:700}
+
+  .steplist{display:flex;flex-direction:column;gap:5px;font-size:13px}
+  .steplist .st{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:8px;background:#f8fafc;border-left:4px solid #c9d6e4}
+  .steplist .st.cur{border-left-color:var(--amber);background:var(--amber-pale)}
+  .steplist .st.done{border-left-color:var(--green);background:var(--green-pale)}
+  .steplist .st b{color:var(--blue-d)}
+  .steplist .st .no{width:18px;height:18px;flex:none;border-radius:50%;background:#e3e9f0;color:#9aa9b9;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .steplist .st.done .no{background:var(--green);color:#fff}
+  .steplist .st.cur .no{background:var(--amber);color:#fff}
+  .idea{font-size:12.5px;line-height:1.75;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--violet-pale);border-left:4px solid var(--violet)}
+  .idea b{color:#5b2c6f}
+  .idea code{background:#fff;padding:0 4px;border-radius:4px;font-family:Consolas,monospace}
+
+  .codebox{font-family:Consolas,monospace;font-size:12.5px;background:var(--code-bg);color:#d7e3f0;border-radius:10px;padding:8px 4px;overflow:auto;max-height:52vh}
+  .coderow{display:flex;padding:1.5px 10px 1.5px 4px;border-radius:5px;white-space:pre}
+  .coderow .ln{width:26px;text-align:right;color:#5b7086;font-size:11px;flex:none;user-select:none}
+  .coderow .tx{flex:1}
+  .coderow.cur{background:#fff6dd;color:#000;font-weight:600}
+  .code-foot{font-size:11.5px;color:var(--ink-2);margin-top:6px}
+
+  .desc{font-size:14.5px;min-height:44px;padding:9px 12px;border-radius:10px;background:var(--blue-pale);border-left:4px solid var(--blue);margin-top:6px}
+  .desc.done{background:var(--green-pale);border-left-color:var(--green)}
+  .desc b{color:var(--blue-d)}
+  .desc.done b{color:var(--green-d)}
+  .desc code{background:#fff;padding:0 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:8px}
+  .btn2{border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 13px;background:var(--blue-pale);color:var(--blue);font-family:inherit}
+  .btn2.primary{background:var(--blue);color:#fff}
+  .btn2.ghost{background:#eef2f7;color:var(--ink-2)}
+  .btn2:disabled{opacity:.45;cursor:not-allowed}
+  .btn2:hover{filter:brightness(.97)}
+  #seek{flex:1;min-width:120px;max-width:380px;accent-color:var(--blue)}
+  .speed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+  .speed input{width:100px;accent-color:var(--blue)}
+  .stepno{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .keys{font-size:11.5px;color:var(--ink-2);margin-top:7px;text-align:center}
+  kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;font-family:Consolas,monospace}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,168,58,.5)}50%{box-shadow:0 0 0 6px rgba(240,168,58,0)}}
+
+  /* ---- shared sort-demo extensions ---- */
+  .cell.hole .val{border-style:dashed;border-color:#c3ccd6;background:repeating-linear-gradient(45deg,#f7f9fb,#f7f9fb 6px,#eef2f7 6px,#eef2f7 12px);color:#b9c4cf}
+  .cell.keycell .val{background:#fff3d6;border-color:#f0a83a;color:#92400e}
+  .cell.min .ix{background:var(--violet);color:#fff;border-color:var(--violet)}
+  .cell.min .val{background:var(--violet-pale);border-color:var(--violet);color:#5b2c6f}
+  .cell.scan .ix{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .cell.scan .val{background:var(--amber-pale);border-color:var(--amber);color:#92400e}
+  .cell.bound .val{box-shadow:inset 0 0 0 2px var(--blue)}
+  .keybar{display:flex;align-items:center;gap:10px;margin:8px 0 2px;min-height:42px}
+  .keycard{border:2px solid var(--amber);background:var(--amber-pale);border-radius:9px;padding:4px 12px;font-family:Consolas,monospace;font-size:16px;font-weight:700;color:#92400e;white-space:nowrap}
+  .keycard.empty{border-style:dashed;border-color:#c3ccd6;background:#f7f9fb;color:#b9c4cf;font-weight:400;font-size:13px}
+  .keylbl{font-size:12px;color:var(--ink-2);white-space:nowrap}
+  .heapwrap{display:flex;justify-content:center;overflow:auto}
+  .auxrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .auxcell{min-width:40px;text-align:center;font-family:Consolas,monospace;font-size:14px;border:1.5px solid #a9bdd4;border-radius:6px;padding:5px 3px;background:#fff}
+  .auxcell.done{background:#f6f8fa;border-color:#dce3ea;color:#9aa9b9}
+  .auxcell.cur{background:var(--amber-pale);border-color:var(--amber);color:#92400e;font-weight:700}
+  .bucketwrap{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+  .bucket{flex:1;min-width:52px;border:1.5px solid var(--line);border-radius:8px;background:#f8fafc;padding:4px 3px;text-align:center}
+  .bucket.active{border-color:var(--violet);background:var(--violet-pale)}
+  .bucket .bl{font-size:10.5px;color:var(--ink-2);border-bottom:1px dashed var(--line);padding-bottom:2px;margin-bottom:3px;font-family:Consolas,monospace}
+  .bucket .bi{font-family:Consolas,monospace;font-size:12.5px;color:var(--blue-d);line-height:1.5}
+  .bucket .bi.new{color:var(--amber);font-weight:700}
+  .stackbox{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .stackitem{border:1.5px solid #a9bdd4;border-radius:7px;background:#fff;padding:2px 9px;font-family:Consolas,monospace;font-size:12px;color:var(--ink-2)}
+  .stackitem.cur{border-color:var(--amber);background:var(--amber-pale);color:#92400e;font-weight:700}
+  .stackitem.done{border-color:var(--green);background:var(--green-pale);color:var(--green-d)}
+  .segbar{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--ink-2);font-family:Consolas,monospace}
+  .segbar .seg{border:1.5px dashed #a9bdd4;border-radius:6px;padding:1px 7px;background:#fff}
+  .segbar .seg.on{border-color:var(--amber);background:var(--amber-pale);color:#92400e;font-weight:700}
+  /* ---- bubble-names page: name cells and the full-width pro-forma card ---- */
+  .cell.name{min-width:60px}
+  .cell.name .val{font-size:14.5px;padding:7px 2px;letter-spacing:-.3px}
+  .card.widecard{grid-column:1 / -1}
+  .card.widecard h3{display:flex;align-items:center;gap:8px}
+  .tracewrap{overflow:auto;max-width:100%}
+  .tracewrap table.trace{font-size:11.5px}
+  .tracewrap table.trace th,.tracewrap table.trace td{padding:2.5px 4px;white-space:nowrap}
+  /* ---- merge-topdown: range highlight, L/R buffers, call stack ---- */
+  .cell.range{border-color:#f0a83a;background:#fffaf0}
+  .auxrow{display:flex;align-items:center;gap:6px;margin-top:8px;font-family:Consolas,monospace}
+  .auxlbl{width:16px;color:#64748b;font-weight:700;font-size:12px}
+  .auxcell{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:30px;border-radius:8px;border:1px solid #cfd8e3;background:#fff;font-size:13px;color:#334155}
+  .auxcell.auxcur{border-color:#8e44ad;background:#f3e8fa;color:#6b21a8;font-weight:700}
+  .auxcell.auxdone{opacity:.45;text-decoration:line-through}
+  .stackrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
+  .stackchip{font-family:Consolas,monospace;font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid #cfd8e3;background:#f5f8fc;color:#334155}
+  .stackchip.top{border-color:#f0a83a;background:#fff3d6;color:#8a4b00;font-weight:700}
+  .stackempty{color:#94a3b8;font-size:12px}
+  /* ---- minstack: two vertical arrays + top ---- */
+  .msWrap{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  .msStack{display:flex;flex-direction:column;gap:6px;min-width:148px}
+  .msTitle{font:700 12px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#475569;margin-bottom:2px}
+  .msCell{display:flex;align-items:center;gap:8px;height:38px;border-radius:9px;border:1px dashed #cfd8e3;background:#f8fafc;padding:0 10px;font-family:Consolas,monospace}
+  .msCell.on{border-style:solid;background:#eef4ff;border-color:#c3d4f5}
+  .msCell.minCell.on{background:#e9f9f1;border-color:#bfe6cf}
+  .msCell.topCell{outline:2px solid #f0a83a;outline-offset:1px}
+  .msIdx{width:14px;color:#94a3b8;font-size:11px}
+  .msVal{flex:1;text-align:center;font-size:15px;color:#1e293b;font-weight:600}
+  .msMark{width:56px;font-size:10.5px;color:#b45309;text-align:right}
+  .msSide{display:flex;flex-direction:column;gap:8px;min-width:172px}
+  .msBadge{font:600 12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;color:#334155}
+  .msBadge.big{background:#fff7e6;border-color:#f0c987;color:#8a4b00}
+  .msHint{font-size:11.5px;color:#64748b;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="course">Data Structures · Sorting</div>
+    <h1>Min-Stack — two arrays and a top pointer: push / pop / peek / getMin</h1>
+    <div class="chapter" id="chapter"></div>
+    <div class="modes" id="modes">
+      <button class="mode-pill active" data-mode="a">1. Courseware trace: 5, 3, 7 → getMin<small>push 5 / 3 / 7, getMin = 3, pop 7</small></button>
+      <button class="mode-pill" data-mode="b">2. Edges: overflow + empty stack<small>6th push overflows; pop/peek/getMin on empty</small></button>
+      <button class="mode-pill" data-mode="c">3. When the minimum is popped<small>after popping 7 and 3 the min falls back to 5</small></button>
+      <button class="mode-pill" data-mode="d">4. Why minArr is needed<small>scanning would cost 3+5=8 comparisons</small></button>
+    </div>
+    <div class="nav">
+      <a href="index.html">1. Tree traversals</a>
+      <a href="bst.html">2. Binary Search Tree</a>
+      <a href="hash-linear-probing.html">3. Hash table · linear probing</a>
+      <a href="hash-stl.html">4. STL unordered_map</a>
+      <a href="nonrepeat-char.html">5. First non-repeating char</a>
+      <a href="reconstruct-tree.html">6. Reconstruct binary tree</a>
+      <a href="bst-insert.html">7. BST insert 15/90/65</a>
+      <a href="hanoi.html">8. Tower of Hanoi</a>
+      <a href="fib-recursion.html">9. Fibonacci recursion</a>
+      <a href="stack-reverse.html">10. Reverse a string with a stack</a>
+      <a href="queue-reverse-k.html">11. Reverse the first K of a queue</a>
+      <a href="undo-stack.html">12. Stack · editor Undo</a>
+      <a href="palindrome-stack.html">13. Stack · palindrome checker</a>
+      <a href="queue-clinic.html">14. Queue · clinic line</a>
+      <a href="linear-search.html">15. Linear search</a>
+      <a href="binary-search.html">16. Binary search</a>
+      <a href="bubble-sort.html">17. Bubble sort</a>
+      <a href="insertion-sort.html">18. Insertion sort</a>
+      <a href="shell-sort.html">19. Shell sort</a>
+      <a href="quick-sort.html">20. Quick sort</a>
+      <a href="selection-sort.html">21. Selection sort</a>
+      <a href="heap-sort.html">22. Heap sort</a>
+      <a href="merge-sort.html">23. Merge sort</a>
+      <a href="radix-sort.html">24. Radix sort</a>
+      <a href="bubble-names.html">25. Bubble sort · names</a>
+      <a href="outcome2.html">26. Exam cram · outcome2</a>
+      <a href="merge-topdown.html">27. Merge sort · recursion tree</a>
+      <a href="minstack.html" class="on">28. Min-stack</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="lcol">
+      <div class="card">
+        <h3>📚 arr (elements) beside minArr (prefix minima), with top pointing at the top <span class="tag" id="modeTag"></span></h3>
+        <div id="stage"></div>
+        <div class="legend"><span><span class="dot" style="background:#eef4ff;border:1px solid #4b7bec"></span>live element (index ≤ top)</span><span><span class="dot" style="background:#e3f6ec;border:1px solid #1c9c57"></span>minArr = prefix minimum</span><span><span class="dot" style="background:#fff3d6;border:1.5px solid #f0a83a"></span>the cell touched by this operation</span></div>
+        <div class="statrow" id="statRow"></div>
+        <div class="answerbox" id="answerBox">
+          <span class="alabel">current minimum getMin()</span><span class="ret" id="ret"></span><span class="ret-sub" id="retSub"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🧾 Operation log (one row per call) <span class="tag" id="traceTag"></span></h3>
+        <table class="trace"><thead></thead><tbody id="traceBody"></tbody></table>
+      </div>
+
+      <div class="card">
+        <h3>💬 Current operation <span class="tag" id="phaseTag"></span></h3>
+        <div class="desc" id="desc"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <h3>💻 The C++ class the exercise asks for <span class="tag" id="codeTag"></span></h3>
+        <div class="codebox" id="codeBox"></div>
+        <div class="code-foot">Yellow = the line being executed. <b>Two key lines</b>: <code>arr[++top] = val</code> and <code>minArr[top] = min(minArr[top-1], val)</code> — the first pushes the value, the second records the running minimum.</div>
+      </div>
+      <div class="card">
+        <h3>📄 Key points & why it is O(1)</h3>
+        <div class="steplist" id="stepList">
+        <div class="st" data-step="1"><span class="no">1</span><span><code>push(v)</code>: check full, then <code>arr[++top]=v</code>, <code>minArr[top]=min(minArr[top-1],v)</code></span></div>
+        <div class="st" data-step="2"><span class="no">2</span><span><code>pop()</code>: check empty, then clear both arrays at top and <code>top--</code></span></div>
+        <div class="st" data-step="3"><span class="no">3</span><span><code>peek()</code>: read <code>arr[top]</code>, change nothing</span></div>
+        <div class="st" data-step="4"><span class="no">4</span><span><code>getMin()</code>: read <code>minArr[top]</code> → O(1)</span></div>
+        </div>
+        <div class="idea"><b>The courseware trace (reproduced)</b>: push(5) → [5] min 5; push(3) → [5,3] min 3; push(7) → [5,3,7] min 3; getMin() → 3; pop() → removes 7, min stays 3.<br><b>Why is getMin O(1)?</b> <code>minArr[i]</code> holds the minimum of <code>arr[0..i]</code>.<br>· push: a new value can only be smaller than the running minimum or not affect it, so <code>min(oldMin, v)</code> is the new prefix minimum;<br>· pop: both arrays retreat by one, and <code>minArr[top-1]</code> is already the minimum of what remains — nothing to recompute.<br>That is what makes it faster than scanning (O(n)) on every getMin: <b>O(n) extra space</b> buys an <b>O(1) query</b>.<br><br><b>Edges (as the exercise asks)</b>: push on a full stack → <code>Stack Overflow!</code>; pop on empty → <code>Stack Underflow!</code>; peek / getMin on empty → <code>Stack is empty!</code>.<br><b>Common mistakes</b>: (1) <code>top</code> must start at <b>-1</b> (not 0), otherwise the first element is off by one; (2) popping must clear <b>both</b> arrays, or a later push reusing that slot reads a stale minimum; (3) the first element has no previous minArr entry — handle it separately (the code here uses <code>top==0 ? val : ...</code>).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card widecard"><h3>📋 Cell-by-cell: how minArr mirrors arr</h3><div class="tracewrap"><table class="trace"><thead><tr><th>operation</th><th>arr</th><th>minArr</th><th>top</th><th>output</th></tr></thead><tbody><tr><td>push(5)</td><td>[5]</td><td>[5]</td><td>0</td><td>—</td></tr><tr><td>push(3)</td><td>[5, 3]</td><td>[5, 3]</td><td>1</td><td>—</td></tr><tr><td>push(7)</td><td>[5, 3, 7]</td><td>[5, 3, 3]</td><td>2</td><td>—</td></tr><tr><td>getMin()</td><td>[5, 3, 7]</td><td>[5, 3, 3]</td><td>2</td><td><b>3</b></td></tr><tr><td>pop()</td><td>[5, 3]</td><td>[5, 3]</td><td>1</td><td>Removes 7</td></tr><tr><td>pop()</td><td>[5]</td><td>[5]</td><td>0</td><td>Removes 3</td></tr><tr><td>pop()</td><td>[]</td><td>[]</td><td>-1</td><td>Removes 5</td></tr><tr><td>getMin()</td><td>[]</td><td>[]</td><td>-1</td><td>Stack is empty!</td></tr></tbody></table></div><p style="margin:10px 0 0;font-size:12.5px">Notice <code>minArr[i] = min(arr[0..i])</code>: it grows and retreats with top, so reading the minimum never scans.</p></div>
+
+  <div class="controls card">
+    <button class="btn2 ghost" id="bReset" title="⏮ Reset (R)">⏮ Reset</button>
+    <button class="btn2 ghost" id="bPrev" title="◀ Back (←)">◀ Back</button>
+    <button class="btn2 primary" id="bPlay" title="▶ Play (Space)">▶ Play</button>
+    <button class="btn2" id="bNext" title="Next ▶ (→)">Next ▶</button>
+    <button class="btn2 ghost" id="bEnd" title="⏭ Result (E)">⏭ Result</button>
+    <input type="range" id="seek" min="0" max="0" step="1" value="0">
+    <div class="speed">Speed <input type="range" id="speed" min="2" max="18" value="7"><span id="speedL"></span></div>
+    <span class="stepno" id="stepText"></span>
+  </div>
+  <div class="keys">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> step · <kbd>R</kbd> reset · <kbd>E</kbd> result</div>
+</div>
+
+<script>
+const T = {
+ "intro1": "Task: implement <code>MinStack</code> with two <b>fixed-size arrays</b> (capacity {0}) — besides push / pop / peek, it must return the current minimum in <b>O(1)</b>.",
+ "intro2": "The trick: <code>minArr[top]</code> stores <b>the minimum of everything from the bottom up to top</b> — on push take <code>min(previous minArr, new value)</code>, on pop both arrays <b>retreat together</b>. Reading the minimum is then a single array access, with no scan.",
+ "callPush": "call <code>push({0})</code> → first check <code>isFull()</code>",
+ "overflow": "<code>top == 4</code> → the stack is full: print <b>\"Stack Overflow!\"</b> and leave everything unchanged",
+ "overflowDone": "push({0}) was rejected; the stack is still full (capacity 5 exhausted)",
+ "pushWrite": "<code>arr[++top] = {1}</code> → store at index <b>{0}</b>; top becomes {0}",
+ "minWrite": "<code>minArr[{0}] = min({2}, {1}) = {1}</code>",
+ "noPrev": "no previous entry (first element)",
+ "pushDone": "push({0}) done: elements <b>[{1}]</b>, current minimum <b>{2}</b>",
+ "callPop": "call <code>pop()</code> → first check <code>isEmpty()</code>",
+ "underflow": "<code>top == -1</code> → empty: print <b>\"Stack Underflow!\"</b> and delete nothing",
+ "underflowDone": "popping an empty stack is safe (it only prints the message)",
+ "popOut": "take the top <code>arr[top] = {0}</code>",
+ "popWrite": "<b>both arrays retreat</b>: clear arr / minArr at that index and <code>top--</code>",
+ "popDone": "pop() done: removed {0}; {1}",
+ "emptyNow": "the stack is now empty",
+ "callPeek": "call <code>peek()</code>: look at the top <b>without removing</b>",
+ "peekEmpty": "empty stack → print <b>\"Stack is empty!\"</b>",
+ "peekVal": "<code>peek() = {0}</code> (the element stays on the stack)",
+ "peekDone": "peek changes neither top nor the arrays",
+ "callMin": "call <code>getMin()</code>: read <code>minArr[top]</code> only",
+ "minEmpty": "empty stack → print <b>\"Stack is empty!\"</b>",
+ "minRead": "<code>return minArr[top] = {0}</code> — <b>one</b> array access (O(1)); without minArr you would scan {1} elements",
+ "minDone": "getMin() returns {0}; the stack is unchanged",
+ "done": "✔ Done: the stack is <b>[{0}]</b>, current minimum <b>{1}</b><br>📌 Key idea: <code>minArr[i]</code> is the <b>prefix minimum</b> of the first i+1 elements; on pop both arrays retreat together, so the minimum is always O(1).",
+ "emptyStack": "empty",
+ "doneSub": "{0} element(s) on the stack",
+ "tail": " · {0}/{1} elements · min <b>{2}</b>",
+ "stSize": "size <b>{0}</b>",
+ "stTop": "top = <b>{0}</b>",
+ "stMin": "minimum <b>{0}</b>",
+ "stCost": "getMin cost <b>{0}</b>",
+ "costO1": "O(1) · one access",
+ "retSubWait": "minArr[top] is the answer",
+ "rowOp": "{0}{1}",
+ "chapter": "Min-Stack — two arrays of capacity 5 (arr holds the elements, minArr the prefix minima) plus top; push/pop O(1), getMin O(1), with explicit overflow and underflow messages",
+ "phase": {
+  "intro": "task & idea",
+  "done": "done ✔"
+ },
+ "traceHead": [
+  "Operation",
+  "Output / result",
+  "arr",
+  "minArr",
+  "top"
+ ],
+ "wide": "",
+ "codeTag": "C++ · capacity {0}",
+ "modeTag": "{0} operations",
+ "lblArr": "arr",
+ "lblMin": "minArr",
+ "lblTop": "top",
+ "lblSize": "size",
+ "lblMinNow": "getMin()",
+ "hint": "minArr[top] is the current minimum",
+ "traceEmpty": "(no record yet)",
+ "traceTag": "{0} row(s)",
+ "stepText": "Step <b>{0}</b> / {1}",
+ "pause": "⏸ Pause",
+ "play": "▶ Play"
+};
+
+/* ===== shared runtime for every generated page =====
+   RT.frame      build one frame: write only what differs, defaults fill the rest
+                 (this structurally removes the classic "forgot a frame field" bug)
+   RT.cloneRows  deep-copy trace-table rows (frames must snapshot, never share rows)
+   RT.a2s        array -> "[1, 2, 3]"
+   RT.verifier   per-frame check helpers: leak (unfilled placeholder / typo) /
+                 perm (is a permutation) / multiset (multiset preserved) */
+const RT = {
+  frame(partial, extra) {
+    return Object.assign({
+      msg: '', line: -1, phase: '', done: false, bad: false, tail: '',
+      rows: [], stats: [], stepStates: {}, ret: '', retSub: '', view: {}
+    }, partial, extra || {});
+  },
+  cloneRows(rows) { return rows.map(r => ({ label: r.label, cols: r.cols.slice() })); },
+  a2s(arr) { return '[' + arr.join(', ') + ']'; },
+  verifier() {
+    const out = [];
+    return {
+      out: out,
+      bad(m) { out.push(m); },
+      leak(f, k) {
+        if (f.msg.indexOf('undefined') >= 0 || /\{\d\}/.test(f.msg)) out.push(k + ': msg leak: ' + f.msg);
+        if (f.stats.some(s => /undefined|\{\d\}/.test(s))) out.push(k + ': stats leak');
+      },
+      perm(arr, ms) {
+        return JSON.stringify(arr.slice().sort((x, y) => x - y)) === JSON.stringify(ms);
+      },
+      multiset(arr, skip, extraVals, ms, k) {
+        const rest = arr.filter((x, q) => q !== skip).concat(extraVals).sort((x, y) => x - y);
+        if (JSON.stringify(rest) !== JSON.stringify(ms)) out.push(k + ': multiset broken');
+        return out.length === 0;
+      }
+    };
+  }
+};
+
+/*%%LOGIC_BEGIN%%*/
+const CAP = 5;
+/* four operation sequences */
+const MODES = {
+  a: { // courseware trace: push 5/3/7 → getMin = 3 → pop 7, then finish emptying the stack
+       ops: [['push',5],['push',3],['push',7],['getMin'],['pop'],['pop'],['pop'],['getMin']] },
+  b: { // edges: push until overflow, then pop all the way down to empty
+       ops: [['push',1],['push',2],['push',3],['push',4],['push',5],['push',6],['peek'],['pop'],['pop'],['pop'],['pop'],['pop'],['pop'],['peek'],['getMin']] },
+  c: { // after the minimum is popped, the min falls back to the previous layer
+       ops: [['push',5],['push',3],['push',7],['getMin'],['pop'],['getMin'],['pop'],['getMin']] },
+  d: { // comparison: how many checks a scanning getMin would cost
+       ops: [['push',5],['push',3],['push',7],['push',1],['push',6],['getMin'],['getMin']] }
+};
+// independent reference: a literal transcription of the courseware pseudocode
+function refRun(ops) {
+  const arr = new Array(CAP).fill(null), mn = new Array(CAP).fill(null), out = [];
+  let top = -1, scans = 0;
+  for (const op of ops) {
+    const k = op[0], v = op[1];
+    let msg = '', res = null, scan = 0;
+    if (k === 'push') {
+      if (top === CAP - 1) msg = 'Stack Overflow!';
+      else { top++; arr[top] = v; mn[top] = (top === 0 ? v : Math.min(mn[top - 1], v)); msg = 'push(' + v + ') → [' + arr.slice(0, top + 1).join(', ') + ']'; }
+    } else if (k === 'pop') {
+      if (top === -1) msg = 'Stack Underflow!';
+      else { msg = 'pop() → Removes ' + arr[top]; arr[top] = null; mn[top] = null; top--; }
+    } else if (k === 'peek') {
+      if (top === -1) msg = 'Stack is empty!';
+      else { msg = 'peek() = ' + arr[top]; res = arr[top]; }
+    } else if (k === 'getMin') {
+      if (top === -1) msg = 'Stack is empty!';
+      else {
+        for (let q = 0; q <= top; q++) scan++;   // without minArr every getMin would scan the whole stack
+        scans += scan;
+        res = mn[top]; msg = 'getMin() → ' + mn[top];
+      }
+    }
+    out.push({ op: k, arg: v, msg: msg, res: res, arr: arr.slice(), mn: mn.slice(), top: top, scan: scan });
+  }
+  return { out: out, scans: scans };
+}
+const REF = {};
+for (const k in MODES) REF[k] = refRun(MODES[k].ops);
+
+const CODE = [
+  'class MinStack {',
+  '    static const int CAP = 5;',
+  '    int arr[CAP];',
+  '    int minArr[CAP];',
+  '    int top;',
+  'public:',
+  '    MinStack() { top = -1; }',
+  '    bool isFull()  { return top == CAP - 1; }',
+  '    bool isEmpty() { return top == -1; }',
+  '    void push(int val) {',
+  '        if (isFull()) { cout << "Stack Overflow!" << endl; return; }',
+  '        arr[++top] = val;',
+  '        minArr[top] = (top == 0) ? val : min(minArr[top-1], val);',
+  '    }',
+  '    void pop() {',
+  '        if (isEmpty()) { cout << "Stack Underflow!" << endl; return; }',
+  '        cout << "Removes " << arr[top] << endl;',
+  '        arr[top] = -1; minArr[top] = -1; top--;',
+  '    }',
+  '    int peek() {',
+  '        if (isEmpty()) { cout << "Stack is empty!" << endl; return -1; }',
+  '        return arr[top];',
+  '    }',
+  '    int getMin() {',
+  '        if (isEmpty()) { cout << "Stack is empty!" << endl; return -1; }',
+  '        return minArr[top];   // O(1)',
+  '    }',
+  '};'
+];
+const LN = { pushGuard: 10, pushWrite: 11, minCalc: 12, popGuard: 15, popOut: 16, popWrite: 17,
+             peekGuard: 20, peekRet: 21, minGuard: 24, minRet: 25 };
+
+function buildFrames(mk) {
+  const M = MODES[mk];
+  const arr = new Array(CAP).fill(null), mn = new Array(CAP).fill(null);
+  const frames = [], rows = [];
+  let top = -1, idx = 0, lastMin = null;
+
+  function snap(msg, line, extra) {
+    frames.push(RT.frame({
+      msg: msg, line: line,
+      tail: F(T.tail, top + 1, CAP, top < 0 ? '—' : mn[top]),
+      rows: RT.cloneRows(rows),
+      stats: [F(T.stSize, top + 1), F(T.stTop, top), F(T.stMin, top < 0 ? '—' : mn[top]), F(T.stCost, T.costO1)],
+      stepStates: {
+        '1': (idx === 0 ? 'cur' : (top >= 0 ? 'done' : '')),
+        '2': (idx === 1 ? 'cur' : ''),
+        '3': (idx === 2 ? 'cur' : ''),
+        '4': (idx === 3 ? 'cur' : '')
+      },
+      ret: top < 0 ? '—' : String(mn[top]), retSub: T.retSubWait,
+      view: { cap: CAP, arr: arr.slice(), mn: mn.slice(), top: top, kind: '', opIdx: idx,
+              last: msg, extra: '' }
+    }, extra));
+  }
+  function pushRow(o) {
+    rows.push({ label: F(T.rowOp, o.op, (o.arg === undefined ? '()' : '(' + o.arg + ')')),
+                cols: [o.msg, arr.map(function (x) { return x === null ? '·' : x; }).join(' '),
+                       mn.map(function (x) { return x === null ? '·' : x; }).join(' '), String(o.top)] });
+  }
+
+  snap(F(T.intro1, CAP), -1);
+  snap(T.intro2, -1);
+  MODES[mk].ops.forEach(function (op) {
+    const k = op[0], v = op[1];
+    if (k === 'push') {
+      snap(F(T.callPush, v), LN.pushGuard);
+      if (top === CAP - 1) {
+        snap(T.overflow, LN.pushGuard);
+        pushRow({ op: 'push', arg: v, msg: 'Stack Overflow!', top: top });
+        snap(F(T.overflowDone, v), LN.pushGuard);
+      } else {
+        top++; arr[top] = v;
+        const prev = (top === 0 ? null : mn[top - 1]);
+        mn[top] = (top === 0 ? v : Math.min(prev, v));
+        snap(F(T.pushWrite, top, v), LN.pushWrite);
+        snap(F(T.minWrite, top, mn[top], prev === null ? T.noPrev : prev), LN.minCalc);
+        pushRow({ op: 'push', arg: v, msg: 'push(' + v + ') → [' + arr.slice(0, top + 1).join(', ') + ']', top: top });
+        snap(F(T.pushDone, v, arr.slice(0, top + 1).join(', '), mn[top]), LN.minCalc);
+      }
+    } else if (k === 'pop') {
+      snap(T.callPop, LN.popGuard);
+      if (top === -1) {
+        snap(T.underflow, LN.popGuard);
+        pushRow({ op: 'pop', msg: 'Stack Underflow!', top: top });
+        snap(T.underflowDone, LN.popGuard);
+      } else {
+        const removed = arr[top];
+        snap(F(T.popOut, removed), LN.popOut);
+        arr[top] = null; mn[top] = null; top--;
+        snap(F(T.popWrite, removed), LN.popWrite);
+        pushRow({ op: 'pop', msg: 'pop() → Removes ' + removed, top: top });
+        snap(F(T.popDone, removed, top < 0 ? T.emptyNow : ('min = ' + mn[top])), LN.popWrite);
+      }
+    } else if (k === 'peek') {
+      snap(T.callPeek, LN.peekGuard);
+      if (top === -1) { snap(T.peekEmpty, LN.peekGuard); pushRow({ op: 'peek', msg: 'Stack is empty!', top: top }); }
+      else { snap(F(T.peekVal, arr[top]), LN.peekRet); pushRow({ op: 'peek', msg: 'peek() = ' + arr[top], top: top }); }
+      snap(T.peekDone, LN.peekRet);
+    } else if (k === 'getMin') {
+      snap(T.callMin, LN.minGuard);
+      if (top === -1) { snap(T.minEmpty, LN.minGuard); pushRow({ op: 'getMin', msg: 'Stack is empty!', top: top }); }
+      else {
+        snap(F(T.minRead, mn[top], top + 1), LN.minRet);
+        pushRow({ op: 'getMin', msg: 'getMin() → ' + mn[top], top: top });
+        lastMin = mn[top];
+      }
+      snap(F(T.minDone, top < 0 ? '—' : mn[top]), LN.minRet);
+    }
+    idx++;
+  });
+  snap(F(T.done, top < 0 ? T.emptyStack : arr.slice(0, top + 1).join(', '), top < 0 ? '—' : mn[top]), -1, {
+    done: true, ret: top < 0 ? '—' : String(mn[top]), retSub: F(T.doneSub, top + 1),
+    stepStates: { '1': 'done', '2': 'done', '3': 'done', '4': 'done' }
+  });
+  return frames;
+}
+const CACHE = {};
+for (const k in MODES) CACHE[k] = buildFrames(k);
+
+// ---- self-check: frames and operations vs the reference, and minArr is always the prefix minimum
+function verify() {
+  const __v = RT.verifier(), out = __v.out, bad = __v.bad;
+  for (const k in MODES) {
+    const R = REF[k], F2 = CACHE[k], L = F2[F2.length - 1];
+    // the reference itself: minArr is always the prefix minimum
+    for (const st of R.out) {
+      for (let q = 0; q <= st.top; q++) {
+        let m = st.arr[0];
+        for (let z = 1; z <= q; z++) m = Math.min(m, st.arr[z]);
+        if (st.mn[q] !== m) bad(k + ': minArr[' + q + '] should be ' + m + ' got ' + st.mn[q]);
+      }
+      for (let q = st.top + 1; q < CAP; q++) if (st.arr[q] !== null || st.mn[q] !== null) bad(k + ': cell above top must be empty');
+      if (st.top < -1 || st.top >= CAP) bad(k + ': top out of range');
+    }
+    // every frame must satisfy the same invariant
+    for (const f of F2) {
+      const v = f.view;
+      for (let q = 0; q <= v.top; q++) {
+        let m = v.arr[0];
+        for (let z = 1; z <= q; z++) m = Math.min(m, v.arr[z]);
+        if (v.mn[q] !== m) bad(k + ': frame minArr[' + q + '] wrong');
+      }
+      for (let q = v.top + 1; q < CAP; q++) if (v.arr[q] !== null || v.mn[q] !== null) bad(k + ': frame stale cell');
+      __v.leak(f, k);
+    }
+    // operation by operation: output, elements, minimum and top match the reference
+    if (L.rows.length !== R.out.length) bad(k + ': rows ' + L.rows.length + ' vs ops ' + R.out.length);
+    L.rows.forEach(function (row, q) {
+      const e = R.out[q];
+      if (row.cols[0] !== e.msg) bad(k + ': op ' + q + ' msg "' + row.cols[0] + '" vs "' + e.msg + '"');
+      const arrStr = e.arr.map(function (x) { return x === null ? '·' : x; }).join(' ');
+      const mnStr = e.mn.map(function (x) { return x === null ? '·' : x; }).join(' ');
+      if (row.cols[1] !== arrStr) bad(k + ': op ' + q + ' arr');
+      if (row.cols[2] !== mnStr) bad(k + ': op ' + q + ' minArr');
+      if (row.cols[3] !== String(e.top)) bad(k + ': op ' + q + ' top');
+    });
+    // the key conclusions of the courseware trace
+    if (k === 'a') {
+      const st = R.out[2];
+      if (st.arr.slice(0, 3).join(',') !== '5,3,7' || st.mn[2] !== 3) bad('a: courseware trace mismatch');
+      if (R.out[3].msg !== 'getMin() → 3') bad('a: getMin should return 3');
+      if (R.out[4].msg !== 'pop() → Removes 7' || R.out[4].top !== 1 || R.out[4].mn[1] !== 3) bad('a: pop() trace mismatch');
+    }
+    if (k === 'b') {
+      const ov = R.out[5];
+      if (ov.msg !== 'Stack Overflow!' || ov.top !== 4) bad('b: 6th push must overflow');
+      if (R.out[12].msg !== 'Stack Underflow!' || R.out[12].top !== -1) bad('b: pop on empty must underflow');
+      if (R.out[13].msg !== 'Stack is empty!' || R.out[14].msg !== 'Stack is empty!') bad('b: empty peek/getMin messages');
+    }
+    if (k === 'c') {
+      if (R.out[5].msg !== 'getMin() → 3') bad('c: after popping 7 the min is still 3');
+      if (R.out[7].msg !== 'getMin() → 5') bad('c: after popping 3 the min must fall back to 5');
+    }
+    if (k === 'd') {
+      const st = R.out[R.out.length - 1];
+      if (st.mn[4] !== 1) bad('d: min should be 1');
+      if (R.scans !== 10) bad('d: scan count ' + R.scans + ' vs 10');
+    }
+  }
+  return out;
+}
+/*%%LOGIC_END%%*/
+
+const V = {
+  render(f) {
+    const v = f.view, cap = v.cap;
+    let h = '<div class="msWrap"><div class="msStack">';
+    h += '<div class="msTitle">' + T.lblArr + '</div>';
+    for (let q = cap - 1; q >= 0; q--) {
+      const filled = q <= v.top;
+      let cls = 'msCell' + (filled ? ' on' : '');
+      if (filled && q === v.top) cls += ' topCell';
+      h += '<div class="' + cls + '"><span class="msIdx">' + q + '</span><span class="msVal">' + (filled ? v.arr[q] : '·') + '</span>' +
+           '<span class="msMark">' + (filled && q === v.top ? 'top' : '') + '</span></div>';
+    }
+    h += '</div><div class="msStack">';
+    h += '<div class="msTitle">' + T.lblMin + '</div>';
+    for (let q = cap - 1; q >= 0; q--) {
+      const filled = q <= v.top;
+      const isMinCell = filled && q === v.top;
+      let cls = 'msCell' + (filled ? ' on minCell' : '') + (isMinCell ? ' topCell' : '');
+      h += '<div class="' + cls + '"><span class="msIdx">' + q + '</span><span class="msVal">' + (filled ? v.mn[q] : '·') + '</span>' +
+           '<span class="msMark">' + (isMinCell ? '← getMin' : '') + '</span></div>';
+    }
+    h += '</div>';
+    h += '<div class="msSide"><div class="msBadge"><b>' + T.lblTop + '</b> ' + v.top + '</div>' +
+         '<div class="msBadge"><b>' + T.lblSize + '</b> ' + (v.top + 1) + ' / ' + cap + '</div>' +
+         '<div class="msBadge big"><b>' + T.lblMinNow + '</b> ' + (v.top < 0 ? '—' : v.mn[v.top]) + '</div>' +
+         '<div class="msHint">' + T.hint + '</div></div>';
+    h += '</div>';
+    return h;
+  }
+};
+
+/* ===== shared shell (identical on every sort page) ===== */
+let mode = 'a', frames = [], idx = 0, playing = false, timer = null;
+const $ = s => document.querySelector(s);
+function F(s) { for (let i = 1; i < arguments.length; i++) s = s.split('{' + (i - 1) + '}').join(arguments[i]); return s; }
+function speedMs() { return 1500 - (+$('#speed').value) * 75; }
+function stopAuto(r) { playing = false; if (timer) { clearInterval(timer); timer = null; } if (r !== false) render(); }
+function startAuto() { if (idx >= frames.length - 1) idx = 0; playing = true; render(); timer = setInterval(tick, speedMs()); }
+function tick() { if (idx < frames.length - 1) { idx++; render(); } else stopAuto(); }
+function renderCode(f) {
+  const box = $('#codeBox'); box.innerHTML = '';
+  $('#codeTag').textContent = F(T.codeTag, f.view.n, f.view.extra || '');
+  CODE.forEach((txt, k) => {
+    const row = document.createElement('div');
+    row.className = 'coderow' + (f.line === k ? ' cur' : '');
+    const ln = document.createElement('span'); ln.className = 'ln'; ln.textContent = k + 1;
+    const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = txt;
+    row.appendChild(ln); row.appendChild(tx); box.appendChild(row);
+  });
+  if (f.line >= 0) { const rows = box.querySelectorAll('.coderow'); if (rows[f.line]) box.scrollTop = Math.max(0, rows[f.line].offsetTop - box.clientHeight / 2); }
+}
+function renderTrace(f) {
+  const body = $('#traceBody'); body.innerHTML = '';
+  const head = T.traceHead;
+  let html = '<tr>' + head.map(h => '<th>' + h + '</th>').join('') + '</tr>';
+  if (!f.rows.length) html += '<tr>' + head.map((h, k) => '<td class="note">' + (k === 0 ? T.traceEmpty : '') + '</td>').join('') + '</tr>';
+  f.rows.forEach((r, k) => {
+    const cells = [r.label].concat(r.cols);
+    const cls = (k === f.rows.length - 1 && !f.done) ? 'cur' : '';
+    html += '<tr' + (cls ? ' class="' + cls + '"' : '') + '>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>';
+  });
+  body.innerHTML = html;
+  const wide = $('#wideBody');
+  if (wide) { wide.innerHTML = html; if ($('#wideTag')) $('#wideTag').textContent = F(T.traceTag, f.rows.length); }
+  $('#traceTag').textContent = F(T.traceTag, f.rows.length);
+}
+function renderStats(f) { $('#statRow').innerHTML = f.stats.map(s => '<span>' + s + '</span>').join(''); }
+function renderSteps(f) {
+  document.querySelectorAll('#stepList .st').forEach(el => {
+    const k = el.dataset.step, st = (f.stepStates || {})[k] || '';
+    el.className = 'st' + (st ? ' ' + st : '');
+  });
+}
+function render() {
+  const f = frames[idx];
+  $('#stage').innerHTML = V.render(f);
+  renderTrace(f); renderStats(f); renderSteps(f); renderCode(f);
+  const d = $('#desc'); d.className = 'desc' + (f.done ? ' done' : '');
+  d.innerHTML = f.msg;
+  $('#phaseTag').textContent = T.phase[f.phase] || f.phase;
+  $('#modeTag').textContent = F(T.modeTag, f.view.tag);
+  $('#chapter').textContent = F(T.chapter, f.view.tag);
+  $('#stepText').innerHTML = F(T.stepText, idx + 1, frames.length) + f.tail;
+  $('#answerBox').className = 'answerbox' + (f.bad ? ' no' : '');
+  $('#ret').innerHTML = f.ret;
+  $('#retSub').innerHTML = f.retSub;
+  $('#seek').max = frames.length - 1; $('#seek').value = idx;
+  $('#bPrev').disabled = idx <= 0; $('#bNext').disabled = idx >= frames.length - 1; $('#bEnd').disabled = idx >= frames.length - 1;
+  $('#bPlay').textContent = playing ? T.pause : T.play;
+}
+function setMode(m) {
+  mode = m; frames = CACHE[m]; idx = 0;
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  stopAuto(false); render();
+}
+$('#modes').addEventListener('click', e => { const b = e.target.closest('.mode-pill'); if (b) setMode(b.dataset.mode); });
+$('#bPlay').addEventListener('click', () => playing ? stopAuto() : startAuto());
+$('#bNext').addEventListener('click', () => { if (idx < frames.length - 1) { idx++; render(); } });
+$('#bPrev').addEventListener('click', () => { if (idx > 0) { idx--; stopAuto(); } });
+$('#bReset').addEventListener('click', () => { idx = 0; stopAuto(); });
+$('#bEnd').addEventListener('click', () => { idx = frames.length - 1; stopAuto(); });
+$('#seek').addEventListener('input', e => { idx = +e.target.value; stopAuto(false); render(); });
+$('#speed').addEventListener('input', () => { $('#speedL').textContent = speedMs() + 'ms'; if (playing) { clearInterval(timer); timer = setInterval(tick, speedMs()); } });
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); playing ? stopAuto() : startAuto(); }
+  else if (e.code === 'ArrowRight') { if (idx < frames.length - 1) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft') { if (idx > 0) { idx--; stopAuto(); } }
+  else if (e.code === 'KeyR') { idx = 0; stopAuto(); }
+  else if (e.code === 'KeyE') { idx = frames.length - 1; stopAuto(); }
+});
+$('#speedL').textContent = speedMs() + 'ms';
+setMode('a');
+setTimeout(() => startAuto(), 700);
+
+</script>
+</body>
+</html>
