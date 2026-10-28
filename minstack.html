@@ -184,7 +184,7 @@
     <h1>Min-Stack — two arrays and a top pointer: push / pop / peek / getMin</h1>
     <div class="chapter" id="chapter"></div>
     <div class="modes" id="modes">
-      <button class="mode-pill active" data-mode="a">1. Courseware trace: 5, 3, 7 → getMin<small>push 5 / 3 / 7, getMin = 3, pop 7</small></button>
+      <button class="mode-pill active" data-mode="a">1. The blackboard example: 3, 2, 5, 1<small>top 0→3, minarr = 3, 2, 2, 1</small></button>
       <button class="mode-pill" data-mode="b">2. Edges: overflow + empty stack<small>6th push overflows; pop/peek/getMin on empty</small></button>
       <button class="mode-pill" data-mode="c">3. When the minimum is popped<small>after popping 7 and 3 the min falls back to 5</small></button>
       <button class="mode-pill" data-mode="d">4. Why minArr is needed<small>scanning would cost 3+5=8 comparisons</small></button>
@@ -258,12 +258,12 @@
         <div class="st" data-step="3"><span class="no">3</span><span><code>peek()</code>: read <code>arr[top]</code>, change nothing</span></div>
         <div class="st" data-step="4"><span class="no">4</span><span><code>getMin()</code>: read <code>minArr[top]</code> → O(1)</span></div>
         </div>
-        <div class="idea"><b>The courseware trace (reproduced)</b>: push(5) → [5] min 5; push(3) → [5,3] min 3; push(7) → [5,3,7] min 3; getMin() → 3; pop() → removes 7, min stays 3.<br><b>Why is getMin O(1)?</b> <code>minArr[i]</code> holds the minimum of <code>arr[0..i]</code>.<br>· push: a new value can only be smaller than the running minimum or not affect it, so <code>min(oldMin, v)</code> is the new prefix minimum;<br>· pop: both arrays retreat by one, and <code>minArr[top-1]</code> is already the minimum of what remains — nothing to recompute.<br>That is what makes it faster than scanning (O(n)) on every getMin: <b>O(n) extra space</b> buys an <b>O(1) query</b>.<br><br><b>Edges (as the exercise asks)</b>: push on a full stack → <code>Stack Overflow!</code>; pop on empty → <code>Stack Underflow!</code>; peek / getMin on empty → <code>Stack is empty!</code>.<br><b>Common mistakes</b>: (1) <code>top</code> must start at <b>-1</b> (not 0), otherwise the first element is off by one; (2) popping must clear <b>both</b> arrays, or a later push reusing that slot reads a stale minimum; (3) the first element has no previous minArr entry — handle it separately (the code here uses <code>top==0 ? val : ...</code>).</div>
+        <div class="idea"><b>The blackboard example</b>: push 3 → array=(3) minarr=(3) top=0; push 2 → (3,2)/(3,2) top=1; push 5 → (3,2,5)/(3,2,2) top=2; push 1 → (3,2,5,1)/(3,2,2,1) top=3; getMin() = 1; after popping 1 minarr retreats to 2, getMin() = 2.<br><b>Why is getMin O(1)?</b> <code>minArr[i]</code> holds the minimum of <code>arr[0..i]</code>.<br>· push: a new value can only be smaller than the running minimum or not affect it, so <code>min(oldMin, v)</code> is the new prefix minimum;<br>· pop: both arrays retreat by one, and <code>minArr[top-1]</code> is already the minimum of what remains — nothing to recompute.<br>That is what makes it faster than scanning (O(n)) on every getMin: <b>O(n) extra space</b> buys an <b>O(1) query</b>.<br><br><b>Edges (as the exercise asks)</b>: push on a full stack → <code>Stack Overflow!</code>; pop on empty → <code>Stack Underflow!</code>; peek / getMin on empty → <code>Stack is empty!</code>.<br><b>Common mistakes</b>: (1) <code>top</code> must start at <b>-1</b> (not 0), otherwise the first element is off by one; (2) popping must clear <b>both</b> arrays, or a later push reusing that slot reads a stale minimum; (3) the first element has no previous minArr entry — handle it separately (the code here uses <code>top==0 ? val : ...</code>).</div>
       </div>
     </div>
   </div>
 
-  <div class="card widecard"><h3>📋 Cell-by-cell: how minArr mirrors arr</h3><div class="tracewrap"><table class="trace"><thead><tr><th>operation</th><th>arr</th><th>minArr</th><th>top</th><th>output</th></tr></thead><tbody><tr><td>push(5)</td><td>[5]</td><td>[5]</td><td>0</td><td>—</td></tr><tr><td>push(3)</td><td>[5, 3]</td><td>[5, 3]</td><td>1</td><td>—</td></tr><tr><td>push(7)</td><td>[5, 3, 7]</td><td>[5, 3, 3]</td><td>2</td><td>—</td></tr><tr><td>getMin()</td><td>[5, 3, 7]</td><td>[5, 3, 3]</td><td>2</td><td><b>3</b></td></tr><tr><td>pop()</td><td>[5, 3]</td><td>[5, 3]</td><td>1</td><td>Removes 7</td></tr><tr><td>pop()</td><td>[5]</td><td>[5]</td><td>0</td><td>Removes 3</td></tr><tr><td>pop()</td><td>[]</td><td>[]</td><td>-1</td><td>Removes 5</td></tr><tr><td>getMin()</td><td>[]</td><td>[]</td><td>-1</td><td>Stack is empty!</td></tr></tbody></table></div><p style="margin:10px 0 0;font-size:12.5px">Notice <code>minArr[i] = min(arr[0..i])</code>: it grows and retreats with top, so reading the minimum never scans.</p></div>
+  <div class="card widecard"><h3>📋 The four blackboard steps (array / minarr / top)</h3><div class="tracewrap"><table class="trace"><thead><tr><th>step</th><th>pushed</th><th>array[]</th><th>minarr[]</th><th>top</th><th>why</th></tr></thead><tbody><tr><td>①</td><td>3</td><td>(3)</td><td>(3)</td><td>0</td><td>first element: minarr[0] = 3</td></tr><tr><td>②</td><td>2</td><td>(3, 2)</td><td>(3, 2)</td><td>1</td><td>2 &lt; 3 → minarr[1] = 2</td></tr><tr><td>③</td><td>5</td><td>(3, 2, 5)</td><td>(3, 2, 2)</td><td>2</td><td>5 &gt; 2 → minarr[2] = 2 (keep the previous minimum)</td></tr><tr><td>④</td><td>1</td><td>(3, 2, 5, 1)</td><td>(3, 2, 2, 1)</td><td>3</td><td>1 &lt; 2 → minarr[3] = 1</td></tr></tbody></table></div><p style="margin:10px 0 0;font-size:12.5px"><b>Rule</b>: <code>minarr[top] = min(minarr[top-1], array[top])</code>; <code>top</code> is an <b>index</b> — it is -1 when empty and 0 after the first push (exactly step ①). getMin reads <code>minarr[top]</code> only; both arrays retreat together on pop, so nothing is recomputed.</p></div>
 
   <div class="controls card">
     <button class="btn2 ghost" id="bReset" title="⏮ Reset (R)">⏮ Reset</button>
@@ -330,12 +330,12 @@ const T = {
  "wide": "",
  "codeTag": "C++ · capacity {0}",
  "modeTag": "{0} operations",
- "lblArr": "arr",
- "lblMin": "minArr",
+ "lblArr": "array[]",
+ "lblMin": "minarr[]",
  "lblTop": "top",
  "lblSize": "size",
  "lblMinNow": "getMin()",
- "hint": "minArr[top] is the current minimum",
+ "hint": "minarr[top] is the current minimum (blackboard notation)",
  "traceEmpty": "(no record yet)",
  "traceTag": "{0} row(s)",
  "stepText": "Step <b>{0}</b> / {1}",
@@ -385,7 +385,7 @@ const CAP = 5;
 /* four operation sequences */
 const MODES = {
   a: { // courseware trace: push 5/3/7 → getMin = 3 → pop 7, then finish emptying the stack
-       ops: [['push',5],['push',3],['push',7],['getMin'],['pop'],['pop'],['pop'],['getMin']] },
+       ops: [['push',3],['push',2],['push',5],['push',1],['getMin'],['pop'],['getMin'],['pop'],['pop'],['getMin']] },
   b: { // edges: push until overflow, then pop all the way down to empty
        ops: [['push',1],['push',2],['push',3],['push',4],['push',5],['push',6],['peek'],['pop'],['pop'],['pop'],['pop'],['pop'],['pop'],['peek'],['getMin']] },
   c: { // after the minimum is popped, the min falls back to the previous layer
@@ -427,8 +427,8 @@ for (const k in MODES) REF[k] = refRun(MODES[k].ops);
 const CODE = [
   'class MinStack {',
   '    static const int CAP = 5;',
-  '    int arr[CAP];',
-  '    int minArr[CAP];',
+  '    int array[CAP];',
+  '    int minarr[CAP];',
   '    int top;',
   'public:',
   '    MinStack() { top = -1; }',
@@ -436,21 +436,21 @@ const CODE = [
   '    bool isEmpty() { return top == -1; }',
   '    void push(int val) {',
   '        if (isFull()) { cout << "Stack Overflow!" << endl; return; }',
-  '        arr[++top] = val;',
-  '        minArr[top] = (top == 0) ? val : min(minArr[top-1], val);',
+  '        array[++top] = val;',
+  '        minarr[top] = (top == 0) ? val : min(minarr[top-1], val);',
   '    }',
   '    void pop() {',
   '        if (isEmpty()) { cout << "Stack Underflow!" << endl; return; }',
-  '        cout << "Removes " << arr[top] << endl;',
-  '        arr[top] = -1; minArr[top] = -1; top--;',
+  '        cout << "Removes " << array[top] << endl;',
+  '        array[top] = -1; minarr[top] = -1; top--;',
   '    }',
   '    int peek() {',
   '        if (isEmpty()) { cout << "Stack is empty!" << endl; return -1; }',
-  '        return arr[top];',
+  '        return array[top];',
   '    }',
   '    int getMin() {',
   '        if (isEmpty()) { cout << "Stack is empty!" << endl; return -1; }',
-  '        return minArr[top];   // O(1)',
+  '        return minarr[top];   // O(1)',
   '    }',
   '};'
 ];
@@ -584,10 +584,12 @@ function verify() {
     });
     // the key conclusions of the courseware trace
     if (k === 'a') {
-      const st = R.out[2];
-      if (st.arr.slice(0, 3).join(',') !== '5,3,7' || st.mn[2] !== 3) bad('a: courseware trace mismatch');
-      if (R.out[3].msg !== 'getMin() → 3') bad('a: getMin should return 3');
-      if (R.out[4].msg !== 'pop() → Removes 7' || R.out[4].top !== 1 || R.out[4].mn[1] !== 3) bad('a: pop() trace mismatch');
+      const st = R.out[3];
+      if (st.arr.slice(0, 4).join(',') !== '3,2,5,1' || st.mn.slice(0, 4).join(',') !== '3,2,2,1') bad('a: blackboard trace mismatch');
+      if (R.out[4].msg !== 'getMin() → 1') bad('a: getMin should return 1');
+      if (R.out[5].msg !== 'pop() → Removes 1' || R.out[5].top !== 2) bad('a: popping the minimum');
+      if (R.out[6].msg !== 'getMin() → 2' || R.out[6].mn[2] !== 2) bad('a: min must fall back to 2');
+      if (R.out[9].msg !== 'getMin() → 3') bad('a: min must be 3 at the end');
     }
     if (k === 'b') {
       const ov = R.out[5];
